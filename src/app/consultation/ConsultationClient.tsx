@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useSearchParams } from "next/navigation";
@@ -16,11 +16,13 @@ import { getMessageText } from "@/lib/utils";
 export function ConsultationClient() {
   const searchParams = useSearchParams();
   const caseId = searchParams.get("case");
-  const selectedCase = caseId ? getCaseById(caseId) : null;
 
   const [modelId, setModelId] = useState(DEFAULT_MODEL_ID);
   const [showRecord, setShowRecord] = useState(false);
   const [generatedRecord, setGeneratedRecord] = useState("");
+  const [generationError, setGenerationError] = useState("");
+  const [loadedCaseId, setLoadedCaseId] = useState<string | null>(caseId);
+  const selectedCase = loadedCaseId ? getCaseById(loadedCaseId) : null;
   const [localMessages, setLocalMessages] = useState<
     { role: "doctor" | "patient"; content: string }[]
   >(selectedCase ? [...selectedCase.dialogueHistory] : []);
@@ -30,11 +32,17 @@ export function ConsultationClient() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const dialogueEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, status, sendMessage } = useChat({
-    transport: new DefaultChatTransport({
-      api: "/api/chat",
-      body: { model: modelId },
-    }),
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        body: { model: modelId },
+      }),
+    [modelId],
+  );
+
+  const { messages, status, sendMessage, error } = useChat({
+    transport,
   });
 
   const isLoading = status === "streaming" || status === "submitted";
@@ -55,11 +63,32 @@ export function ConsultationClient() {
         .reverse()
         .find((m) => m.role === "assistant");
       if (lastAssistant) {
-        setGeneratedRecord(getMessageText(lastAssistant));
+        setGeneratedRecord(getMessageText(lastAssistant).trim());
         setShowRecord(true);
       }
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (error) {
+      setGenerationError(
+        "病历生成失败：请检查模型配置或稍后重试（例如 API Key / 网络 / 额度）。",
+      );
+      setShowRecord(true);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (status !== "ready") return;
+    if (generatedRecord) return;
+    if (messages.length === 0) return;
+
+    const hasAssistantMessage = messages.some((m) => m.role === "assistant");
+    if (hasAssistantMessage) {
+      setGenerationError("已收到响应但无可展示内容，请重试或切换模型。");
+      setShowRecord(true);
+    }
+  }, [status, generatedRecord, messages]);
 
   const handleAddDialogue = () => {
     if (!inputText.trim()) return;
@@ -74,6 +103,9 @@ export function ConsultationClient() {
 
   const handleGenerateRecord = () => {
     if (localMessages.length === 0) return;
+    setGenerationError("");
+    setGeneratedRecord("");
+    setShowRecord(true);
     const prompt = buildConsultationPrompt(localMessages);
     sendMessage({ text: prompt });
   };
@@ -81,8 +113,10 @@ export function ConsultationClient() {
   const handleLoadCase = (id: string) => {
     const c = getCaseById(id);
     if (c) {
+      setLoadedCaseId(id);
       setLocalMessages([...c.dialogueHistory]);
       setGeneratedRecord("");
+      setGenerationError("");
       setShowRecord(false);
     }
   };
@@ -94,6 +128,7 @@ export function ConsultationClient() {
   const handleClearDialogue = () => {
     setLocalMessages([]);
     setGeneratedRecord("");
+    setGenerationError("");
     setShowRecord(false);
   };
 
@@ -123,12 +158,12 @@ export function ConsultationClient() {
           <span className="flex items-center text-xs text-muted">
             快速加载病例：
           </span>
-          {MEDICAL_CASES.map((c) => (
+          {MEDICAL_CASES.slice(0, 10).map((c) => (
             <button
               key={c.id}
               onClick={() => handleLoadCase(c.id)}
               className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                selectedCase?.id === c.id
+                loadedCaseId === c.id
                   ? "bg-primary text-white"
                   : "bg-gray-100 text-muted hover:bg-gray-200"
               }`}
@@ -154,7 +189,10 @@ export function ConsultationClient() {
           </div>
 
           {/* Dialogue messages */}
-          <div className="flex-1 overflow-y-auto p-4" style={{ maxHeight: "500px" }}>
+          <div
+            className="flex-1 overflow-y-auto p-4"
+            style={{ maxHeight: "500px" }}
+          >
             {localMessages.length === 0 ? (
               <div className="flex h-full items-center justify-center text-sm text-muted">
                 点击上方按钮加载病例，或手动输入对话
@@ -283,9 +321,15 @@ export function ConsultationClient() {
                     AI 正在分析对话并生成病历...
                   </div>
                 )}
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {generatedRecord}
-                </ReactMarkdown>
+                {generationError ? (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                    {generationError}
+                  </div>
+                ) : (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {generatedRecord}
+                  </ReactMarkdown>
+                )}
                 {isLoading && generatedRecord && (
                   <span className="inline-block h-4 w-1 animate-pulse bg-primary" />
                 )}
@@ -309,7 +353,7 @@ export function ConsultationClient() {
                   <p>
                     <strong>鉴别诊断：</strong>
                     {selectedCase.expectedDiagnosis.differentialDiagnosis.join(
-                      "、"
+                      "、",
                     )}
                   </p>
                   <p>
@@ -319,7 +363,7 @@ export function ConsultationClient() {
                   <p>
                     <strong>建议用药：</strong>
                     {selectedCase.expectedDiagnosis.recommendedMedications.join(
-                      "、"
+                      "、",
                     )}
                   </p>
                 </div>

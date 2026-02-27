@@ -11,12 +11,51 @@ const MODEL_MAP: Record<string, string> = {
 
 export async function POST(req: Request) {
   const { messages, model = "gpt-4o-mini" } = await req.json();
+
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    return Response.json(
+      {
+        error:
+          "Missing AI_GATEWAY_API_KEY. Please configure it in local .env.local or Vercel Environment Variables.",
+      },
+      { status: 500 },
+    );
+  }
+
   const gatewayModel = MODEL_MAP[model] || MODEL_MAP["gpt-4o-mini"];
+
+  const latestUserMessage = Array.isArray(messages)
+    ? [...messages].reverse().find((m) => m?.role === "user")
+    : null;
+
+  const promptFromParts = Array.isArray(latestUserMessage?.parts)
+    ? latestUserMessage.parts
+        .map((part: { type?: string; text?: string }) =>
+          part?.type === "text" && typeof part.text === "string"
+            ? part.text
+            : "",
+        )
+        .join("")
+    : "";
+
+  const promptFromContent =
+    typeof latestUserMessage?.content === "string"
+      ? latestUserMessage.content
+      : "";
+
+  const prompt = (promptFromParts || promptFromContent || "").trim();
+
+  if (!prompt) {
+    return Response.json(
+      { error: "Missing user prompt content." },
+      { status: 400 },
+    );
+  }
 
   const result = streamText({
     model: gateway(gatewayModel),
     system: MEDICAL_CONSULTATION_PROMPT,
-    messages,
+    prompt,
     maxOutputTokens: 2000,
   });
 

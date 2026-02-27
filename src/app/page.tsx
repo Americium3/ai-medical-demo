@@ -169,9 +169,6 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-border bg-white px-4 py-8 text-center text-sm text-muted sm:px-6">
         <p>AI 问诊助手演示系统 - 仅供演示用途，不构成医疗建议</p>
-        <p className="mt-1">
-          参考方案：深兰科技 AI 问诊助手智能体
-        </p>
       </footer>
     </div>
   );
