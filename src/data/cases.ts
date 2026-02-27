@@ -1,0 +1,209 @@
+export interface MedicalCase {
+  id: string;
+  department: string;
+  departmentIcon: string;
+  title: string;
+  difficulty: "简单" | "中等" | "复杂";
+  difficultyColor: string;
+  patientInfo: {
+    name: string;
+    age: number;
+    gender: string;
+  };
+  chiefComplaint: string;
+  dialogueHistory: { role: "doctor" | "patient"; content: string }[];
+  expectedDiagnosis: {
+    mainDiagnosis: string;
+    differentialDiagnosis: string[];
+    recommendedTests: string[];
+    recommendedMedications: string[];
+  };
+}
+
+export const MEDICAL_CASES: MedicalCase[] = [
+  {
+    id: "resp-001",
+    department: "呼吸内科",
+    departmentIcon: "🫁",
+    title: "咳嗽发热一周",
+    difficulty: "简单",
+    difficultyColor: "bg-green-100 text-green-700",
+    patientInfo: { name: "张伟", age: 35, gender: "男" },
+    chiefComplaint: "咳嗽、发热一周，伴有黄痰",
+    dialogueHistory: [
+      { role: "doctor", content: "您好，请问哪里不舒服？" },
+      { role: "patient", content: "医生您好，我咳嗽大概一个星期了，还有点发烧。" },
+      { role: "doctor", content: "发烧最高多少度？咳嗽有痰吗？" },
+      { role: "patient", content: "最高38.5度，有痰，黄色的，比较粘稠。" },
+      { role: "doctor", content: "之前有没有受凉或者接触感冒的人？" },
+      { role: "patient", content: "上周出差淋了雨，然后就开始不舒服了。" },
+      { role: "doctor", content: "有没有胸闷、气短的感觉？" },
+      { role: "patient", content: "稍微有点胸闷，深呼吸的时候右边有点疼。" },
+      { role: "doctor", content: "之前有什么病史吗？有没有对什么药过敏？" },
+      { role: "patient", content: "没有什么特别的病史，也没有药物过敏。" },
+    ],
+    expectedDiagnosis: {
+      mainDiagnosis: "社区获得性肺炎",
+      differentialDiagnosis: ["急性支气管炎", "上呼吸道感染"],
+      recommendedTests: ["血常规", "C反应蛋白", "胸部X线"],
+      recommendedMedications: ["阿莫西林克拉维酸钾", "氨溴索口服液"],
+    },
+  },
+  {
+    id: "gastro-001",
+    department: "消化内科",
+    departmentIcon: "🏥",
+    title: "反复腹痛伴腹泻",
+    difficulty: "简单",
+    difficultyColor: "bg-green-100 text-green-700",
+    patientInfo: { name: "李芳", age: 28, gender: "女" },
+    chiefComplaint: "反复腹痛、腹泻三天，伴恶心",
+    dialogueHistory: [
+      { role: "doctor", content: "您好，请问什么情况来看诊？" },
+      { role: "patient", content: "医生，我肚子疼了三天了，一直拉肚子。" },
+      { role: "doctor", content: "一天大概拉几次？大便什么样？" },
+      { role: "patient", content: "一天五六次，水样便，有时候带点粘液。" },
+      { role: "doctor", content: "有没有发烧？吃东西有没有吐？" },
+      { role: "patient", content: "没有发烧，但是恶心，吃不下东西。" },
+      { role: "doctor", content: "发病前吃过什么不干净的东西吗？" },
+      { role: "patient", content: "前天晚上在外面吃了烧烤和生蚝。" },
+      { role: "doctor", content: "疼痛在肚子哪个位置？是一阵一阵的还是持续疼？" },
+      { role: "patient", content: "肚脐周围，一阵一阵的，拉完会好一点。" },
+    ],
+    expectedDiagnosis: {
+      mainDiagnosis: "急性胃肠炎",
+      differentialDiagnosis: ["细菌性痢疾", "食物中毒"],
+      recommendedTests: ["血常规", "大便常规+培养", "电解质"],
+      recommendedMedications: ["蒙脱石散", "口服补液盐", "双歧杆菌"],
+    },
+  },
+  {
+    id: "cardio-001",
+    department: "心内科",
+    departmentIcon: "❤️",
+    title: "胸闷心悸两周",
+    difficulty: "中等",
+    difficultyColor: "bg-yellow-100 text-yellow-700",
+    patientInfo: { name: "王建国", age: 55, gender: "男" },
+    chiefComplaint: "反复胸闷、心悸两周，活动后加重",
+    dialogueHistory: [
+      { role: "doctor", content: "您好，请问您哪里不舒服？" },
+      { role: "patient", content: "医生，我最近两周总是胸闷，心跳得很快。" },
+      { role: "doctor", content: "胸闷是什么时候出现的？什么情况下会加重？" },
+      { role: "patient", content: "上楼梯或者走快了就会胸闷，休息一会儿就好了。" },
+      { role: "doctor", content: "有没有胸痛的感觉？疼痛会不会向左肩膀或者手臂放射？" },
+      { role: "patient", content: "偶尔有一点闷痛，不是很剧烈，没有放射。" },
+      { role: "doctor", content: "您有高血压、糖尿病或者高血脂吗？" },
+      { role: "patient", content: "有高血压十年了，吃着降压药，血脂也偏高。" },
+      { role: "doctor", content: "家里有人得过心脏病吗？您抽烟吗？" },
+      { role: "patient", content: "我父亲有冠心病，我抽烟二十多年了，一天一包。" },
+      { role: "doctor", content: "晚上睡觉有没有被憋醒的情况？脚有没有肿？" },
+      { role: "patient", content: "没有被憋醒，脚也没有肿。" },
+    ],
+    expectedDiagnosis: {
+      mainDiagnosis: "冠状动脉粥样硬化性心脏病",
+      differentialDiagnosis: ["心律失常", "高血压性心脏病", "焦虑症"],
+      recommendedTests: ["心电图", "心脏超声", "冠脉CTA", "血脂全套", "心肌酶谱"],
+      recommendedMedications: ["阿司匹林", "阿托伐他汀", "硝酸甘油（备用）"],
+    },
+  },
+  {
+    id: "neuro-001",
+    department: "神经内科",
+    departmentIcon: "🧠",
+    title: "反复头痛伴眩晕",
+    difficulty: "中等",
+    difficultyColor: "bg-yellow-100 text-yellow-700",
+    patientInfo: { name: "赵丽", age: 42, gender: "女" },
+    chiefComplaint: "反复头痛一个月，伴眩晕、恶心",
+    dialogueHistory: [
+      { role: "doctor", content: "您好，请描述一下您的不适？" },
+      { role: "patient", content: "医生，我头疼了一个多月了，还经常头晕。" },
+      { role: "doctor", content: "头疼是哪个部位？是跳着疼还是闷着疼？" },
+      { role: "patient", content: "右边太阳穴那里，跳着疼，有时候疼起来恶心想吐。" },
+      { role: "doctor", content: "每次头疼持续多长时间？多久发作一次？" },
+      { role: "patient", content: "每次几个小时到一天，一周大概两三次。" },
+      { role: "doctor", content: "有没有什么诱发因素？比如劳累、情绪变化、月经前后？" },
+      { role: "patient", content: "工作压力大或者睡不好的时候容易犯，月经前也会。" },
+      { role: "doctor", content: "头疼的时候怕光怕声音吗？有没有视觉异常？" },
+      { role: "patient", content: "怕光，待在暗的屋子里会舒服点。偶尔看东西有闪光感。" },
+    ],
+    expectedDiagnosis: {
+      mainDiagnosis: "偏头痛（有先兆型）",
+      differentialDiagnosis: ["紧张型头痛", "颈源性头痛", "颅内占位"],
+      recommendedTests: ["头颅MRI", "颈椎X线", "经颅多普勒超声"],
+      recommendedMedications: ["布洛芬", "舒马曲坦", "氟桂利嗪（预防）"],
+    },
+  },
+  {
+    id: "ortho-001",
+    department: "骨科",
+    departmentIcon: "🦴",
+    title: "腰背疼痛伴下肢放射",
+    difficulty: "中等",
+    difficultyColor: "bg-yellow-100 text-yellow-700",
+    patientInfo: { name: "刘强", age: 48, gender: "男" },
+    chiefComplaint: "腰背疼痛三个月，伴左下肢放射痛",
+    dialogueHistory: [
+      { role: "doctor", content: "您好，请问是哪里不舒服？" },
+      { role: "patient", content: "医生，我腰疼了快三个月了，最近左腿也开始疼了。" },
+      { role: "doctor", content: "腰疼是怎么开始的？有没有受过外伤？" },
+      { role: "patient", content: "搬重东西的时候扭了一下，当时就疼了，后来一直没好。" },
+      { role: "doctor", content: "左腿疼是从什么位置到什么位置？" },
+      { role: "patient", content: "从屁股那里一直延伸到小腿，有时候脚趾都发麻。" },
+      { role: "doctor", content: "咳嗽或者用力的时候会加重吗？" },
+      { role: "patient", content: "会的，打喷嚏的时候腰和腿都会疼加重。" },
+      { role: "doctor", content: "走路有没有影响？能走多远？" },
+      { role: "patient", content: "走个几百米就要停下来歇会儿，站着也不太舒服。" },
+    ],
+    expectedDiagnosis: {
+      mainDiagnosis: "腰椎间盘突出症",
+      differentialDiagnosis: ["腰肌劳损", "腰椎管狭窄", "梨状肌综合征"],
+      recommendedTests: ["腰椎MRI", "腰椎X线（正侧位）", "肌电图"],
+      recommendedMedications: ["塞来昔布", "甲钴胺", "腰围固定"],
+    },
+  },
+  {
+    id: "endo-001",
+    department: "内分泌科",
+    departmentIcon: "🔬",
+    title: "多饮多尿消瘦",
+    difficulty: "复杂",
+    difficultyColor: "bg-red-100 text-red-700",
+    patientInfo: { name: "陈明", age: 50, gender: "男" },
+    chiefComplaint: "多饮多尿两个月，体重下降5公斤",
+    dialogueHistory: [
+      { role: "doctor", content: "您好，请问什么不舒服来看诊的？" },
+      { role: "patient", content: "医生，我最近两个月特别容易口渴，喝很多水，上厕所也很频繁。" },
+      { role: "doctor", content: "一天大概喝多少水？上几次厕所？" },
+      { role: "patient", content: "一天得喝四五升水，白天七八次，晚上也要起来三四次。" },
+      { role: "doctor", content: "体重有变化吗？饭量怎么样？" },
+      { role: "patient", content: "瘦了大概5公斤，但是饭量反而增加了，吃得比以前多。" },
+      { role: "doctor", content: "有没有觉得特别容易累？视力有没有变化？" },
+      { role: "patient", content: "确实很容易疲劳，看东西偶尔有点模糊。" },
+      { role: "doctor", content: "家里有人得过糖尿病吗？" },
+      { role: "patient", content: "我母亲有糖尿病，吃了十多年的药了。" },
+      { role: "doctor", content: "皮肤有没有瘙痒或者伤口不容易愈合的情况？" },
+      { role: "patient", content: "手脚偶尔发麻，前段时间脚上割了个小口子，好了很久。" },
+    ],
+    expectedDiagnosis: {
+      mainDiagnosis: "2型糖尿病",
+      differentialDiagnosis: ["1型糖尿病", "尿崩症", "甲状腺功能亢进"],
+      recommendedTests: [
+        "空腹血糖",
+        "糖化血红蛋白(HbA1c)",
+        "OGTT",
+        "胰岛素释放试验",
+        "尿常规",
+        "肝肾功能",
+        "血脂全套",
+        "眼底检查",
+      ],
+      recommendedMedications: ["二甲双胍", "格列美脲", "阿卡波糖"],
+    },
+  },
+];
+
+export function getCaseById(id: string): MedicalCase | undefined {
+  return MEDICAL_CASES.find((c) => c.id === id);
+}
