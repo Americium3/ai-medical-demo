@@ -29,6 +29,13 @@ const features = [
     href: "/comparison",
     color: "from-violet-500 to-purple-500",
   },
+  {
+    icon: "🧭",
+    title: "问诊 Agent",
+    description: "只给主诉，Agent 自主追问、识别危险信号、鉴别诊断并自查，全程可视化执行轨迹",
+    href: "/agent",
+    color: "from-amber-500 to-orange-500",
+  },
 ];
 
 const coreValues = [
@@ -113,9 +120,9 @@ export default function HomePage() {
             系统功能
           </h2>
           <p className="mb-12 text-center text-muted">
-            三大核心模块，全面覆盖 AI 问诊演示场景
+            四大核心模块，全面覆盖 AI 问诊演示场景
           </p>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map((f) => (
               <Link
                 key={f.title}

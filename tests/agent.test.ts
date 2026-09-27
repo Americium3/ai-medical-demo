@@ -244,3 +244,16 @@ test("createGatewayLLM sends a forced tool call and parses the structured reply"
     server.close();
   }
 });
+
+test("chest pain with sweating is an emergency even with words in between", () => {
+  const hits = matchRedFlagRules("我胸口痛了一个小时，一直出大汗");
+  assert.equal(hits[0]?.rule, "胸痛伴大汗/持续不缓解");
+});
+
+test("scripted patient ignores filler words when matching questions", async () => {
+  const c = MEDICAL_CASES.find((x) => x.id === "cardio-001")!;
+  const answer = await createScriptedPatient(c)([], ["有没有对什么药物过敏？"]);
+  assert.equal(answer, "这个我不太清楚。");
+  const smoke = await createScriptedPatient(c)([], ["您抽烟吗？家里有人得过心脏病吗？"]);
+  assert.match(smoke, /抽烟二十多年/);
+});

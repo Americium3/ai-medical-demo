@@ -31,10 +31,16 @@ export function createLLMPatient(c: MedicalCase, llm: AgentLLM): PatientSimulato
   };
 }
 
+/** Bigrams that appear in almost every question and carry no topic. */
+const FILLER = new Set(["有没", "没有", "什么", "医生", "请问", "一下", "情况", "的时", "时候", "觉得", "大概", "会不", "不会"]);
+
 function bigrams(text: string): Set<string> {
   const n = normalize(text);
   const out = new Set<string>();
-  for (let i = 0; i < n.length - 1; i++) out.add(n.slice(i, i + 2));
+  for (let i = 0; i < n.length - 1; i++) {
+    const b = n.slice(i, i + 2);
+    if (!FILLER.has(b)) out.add(b);
+  }
   return out;
 }
 

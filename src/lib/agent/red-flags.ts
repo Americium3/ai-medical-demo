@@ -6,7 +6,7 @@ import type { RiskLevel } from "./schemas";
  * Deliberately small and conservative: this is a safety net, not a triage system.
  */
 export const RED_FLAG_RULES: { rule: string; level: RiskLevel; pattern: RegExp }[] = [
-  { rule: "胸痛伴大汗/持续不缓解", level: "emergency", pattern: /胸[口]?痛.{0,8}(大汗|出汗|不缓解|压榨|濒死)|(大汗|压榨).{0,8}胸[口]?痛/ },
+  { rule: "胸痛伴大汗/持续不缓解", level: "emergency", pattern: /胸[口]?痛.{0,12}(大汗|出汗|不缓解|压榨|濒死)|(大汗|压榨).{0,12}胸[口]?痛/ },
   { rule: "呼吸困难", level: "emergency", pattern: /呼吸困难|喘不上气|喘不过气|憋得说不出话/ },
   { rule: "意识改变/晕厥", level: "emergency", pattern: /意识(不清|模糊)|昏迷|晕倒|晕厥|昏过去/ },
   { rule: "卒中征象", level: "emergency", pattern: /口角歪斜|嘴歪|说话不清|言语不清|半边身子|一侧.{0,2}(无力|麻木)|偏瘫/ },
