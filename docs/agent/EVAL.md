@@ -41,6 +41,29 @@ npx tsx scripts/eval-agent.ts --model claude-sonnet --runs 3 --judge openai/gpt-
 
 **离线 mock**（[`eval/summary-mock-2026-09-27.md`](eval/summary-mock-2026-09-27.md)）：三个条件、6 个病例全部跑通，JSON 和汇总表正常生成。mock 模型、mock 患者、mock 裁判都是关键词规则，**分数没有任何医学意义**，只说明评测流程本身是通的。
 
+## CrewAI 对照（Phase 5）
+
+`experiments/crewai/crew_eval.py` 用 CrewAI 实现了同一个任务，裁判 prompt 与上面相同（从 `src/lib/prompts.ts` 导出）：
+
+| 条件 | 做法 | 对应 |
+|---|---|---|
+| CrewAI·完整对话+审核 | 问诊医生根据完整对话写病历 → 审核医生删改 | A 加一个审核角色 |
+| CrewAI·委派问诊+审核 | 问诊医生只拿主诉，用 CrewAI 内置的 `Ask question to coworker` 委派工具向「患者」agent 提问，最多 5 次 → 审核医生删改 | C 的 CrewAI 写法 |
+
+```bash
+pip install -r experiments/crewai/requirements.txt
+python experiments/crewai/crew_eval.py --offline      # 脚本 LLM，验证角色、委派、上下文传递
+python experiments/crewai/crew_eval.py --runs 1       # 真实模型（需要 AI_GATEWAY_API_KEY）
+```
+
+离线运行（[`eval/crewai-summary-offline-2026-09-27.md`](eval/crewai-summary-offline-2026-09-27.md)）确认：12 次运行全部成功，每个委派问诊都真的调用了一次患者 agent。真实分数待运行。
+
+两种写法的差别，从代码上已经能看出来：
+- **追问轮数**：LangGraph 由条件边和计数器决定（最多 4 轮）；CrewAI 由模型在 ReAct 循环里决定，只能用 `max_iter` 间接限制。
+- **防编造**：LangGraph 是代码检查原话和事实编号；CrewAI 靠审核 agent 读草稿后自觉删改。
+- **危险信号**：LangGraph 有独立节点和短路边；CrewAI 版本里没有对应机制，只能写进 prompt。
+- **代码量**：CrewAI 版本的角色和任务定义约 50 行；LangGraph 版本的图、节点、prompt、schema、落地检查和病历渲染约 770 行（不含 mock）。快和可控是这次取舍的两端。
+
 ## 预期与要验证的假设
 
 写在跑之前，避免事后找理由：
