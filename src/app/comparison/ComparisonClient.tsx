@@ -8,6 +8,7 @@ import { MEDICAL_CASES, getCaseById, type MedicalCase } from "@/data/cases";
 import { AI_MODELS, type AIModel } from "@/data/models";
 import { SCORE_DIMENSIONS, calculateTotalScore } from "@/data/scoring";
 import { buildConsultationPrompt } from "@/lib/prompts";
+import { readUIMessageText } from "@/lib/ui-stream";
 import { ScoreRadarChart } from "@/components/ScoreRadarChart";
 
 interface ModelResult {
@@ -17,6 +18,7 @@ interface ModelResult {
   scores: Record<string, number> | null;
   totalScore: number | null;
   status: "idle" | "loading" | "scoring" | "done" | "error";
+  scoreError?: string;
 }
 
 export function ComparisonClient() {
@@ -68,36 +70,17 @@ export function ComparisonClient() {
           }),
         });
 
-        const reader = res.body?.getReader();
-        const decoder = new TextDecoder();
-        let fullResponse = "";
-
-        if (reader) {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = decoder.decode(value, { stream: true });
-            // Parse SSE stream: extract text from data lines
-            const lines = chunk.split("\n");
-            for (const line of lines) {
-              if (line.startsWith("0:")) {
-                try {
-                  const text = JSON.parse(line.slice(2));
-                  fullResponse += text;
-                  setResults((prev) => ({
-                    ...prev,
-                    [modelId]: {
-                      ...prev[modelId],
-                      response: fullResponse,
-                    },
-                  }));
-                } catch {
-                  // ignore parse errors for non-text chunks
-                }
-              }
-            }
-          }
+        if (!res.ok || !res.body) {
+          const detail = await res.json().catch(() => null);
+          throw new Error(detail?.error || `HTTP ${res.status}`);
         }
+
+        const fullResponse = await readUIMessageText(res.body, (text) => {
+          setResults((prev) => ({
+            ...prev,
+            [modelId]: { ...prev[modelId], response: text },
+          }));
+        });
 
         const responseTime = Date.now() - startTime;
 
@@ -123,6 +106,9 @@ export function ComparisonClient() {
             }),
           });
           const scoreData = await scoreRes.json();
+          if (!scoreRes.ok) {
+            throw new Error(scoreData?.error || `HTTP ${scoreRes.status}`);
+          }
 
           // Calculate speed score based on response time
           const speedScore = Math.max(
@@ -147,22 +133,25 @@ export function ComparisonClient() {
               status: "done",
             },
           }));
-        } catch {
+        } catch (err) {
           setResults((prev) => ({
             ...prev,
             [modelId]: {
               ...prev[modelId],
               status: "done",
+              scoreError: err instanceof Error ? err.message : "评分失败",
             },
           }));
         }
-      } catch {
+      } catch (err) {
         setResults((prev) => ({
           ...prev,
           [modelId]: {
             ...prev[modelId],
             status: "error",
-            response: "请求失败，请检查 API 配置",
+            response: `请求失败，请检查 API 配置（${
+              err instanceof Error ? err.message : "未知错误"
+            }）`,
           },
         }));
       }
@@ -370,6 +359,14 @@ export function ComparisonClient() {
                   {result.status === "done" && result.totalScore && (
                     <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
                       {result.totalScore}分
+                    </span>
+                  )}
+                  {result.status === "done" && result.scoreError && (
+                    <span
+                      className="text-xs text-red-600"
+                      title={result.scoreError}
+                    >
+                      评分失败
                     </span>
                   )}
                 </div>
