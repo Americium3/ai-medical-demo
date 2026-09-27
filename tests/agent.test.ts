@@ -236,10 +236,12 @@ test("createGatewayLLM sends a forced tool call and parses the structured reply"
     assert.deepEqual(llm.usage.map((u) => [u.task, u.inputTokens, u.outputTokens]), [["intake", 120, 30]]);
 
     reply = "text";
+    const before = llm.usage.length;
     await assert.rejects(
       llm.invoke({ task: "intake", schema: intakeOutputSchema, system: "s", user: "u", context: null }),
       AgentLLMError,
     );
+    assert.equal(llm.usage.length - before, 2, "retries once on an unparseable reply");
   } finally {
     server.close();
   }
@@ -256,4 +258,18 @@ test("scripted patient ignores filler words when matching questions", async () =
   assert.equal(answer, "这个我不太清楚。");
   const smoke = await createScriptedPatient(c)([], ["您抽烟吗？家里有人得过心脏病吗？"]);
   assert.match(smoke, /抽烟二十多年/);
+});
+
+test("extra or repeated questions from the model are trimmed, not fatal", async () => {
+  const llm = createMockLLM({
+    ask: () => ({ questions: ["多久了？", "发烧吗？", "有过敏吗？"], rationale: "" }),
+  });
+  const { state } = await runToCompletion({ llm, mode: "interactive" }, [patient("医生，我咳嗽。")]);
+  assert.deepEqual(state.pendingQuestions, ["多久了？", "发烧吗？"]);
+
+  const again = await runToCompletion({ llm: createMockLLM({ ask: () => ({ questions: ["多久了？"], rationale: "" }) }), mode: "interactive" }, [
+    ...state.transcript,
+    patient("不清楚"),
+  ]);
+  assert.deepEqual(again.state.pendingQuestions, ["还有什么其他不舒服，或者想补充的吗？"]);
 });

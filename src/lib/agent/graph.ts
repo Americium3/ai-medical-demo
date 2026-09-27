@@ -126,7 +126,12 @@ export function buildConsultationGraph(deps: GraphDeps) {
       ...askPrompt(s.transcript, s.missing),
       context: { transcript: s.transcript, missing: s.missing },
     });
-    const questions = out.questions.map((q) => q.trim()).filter(Boolean);
+    const asked = new Set(s.transcript.filter((t) => t.role === "agent").map((t) => t.content));
+    let questions = out.questions
+      .map((q) => q.trim())
+      .filter((q) => q && ![...asked].some((a) => a.includes(q)))
+      .slice(0, 2);
+    if (questions.length === 0) questions = ["还有什么其他不舒服，或者想补充的吗？"];
     return {
       pendingQuestions: questions,
       transcript: [{ role: "agent" as const, content: questions.join(" ") }],
@@ -149,7 +154,7 @@ export function buildConsultationGraph(deps: GraphDeps) {
       ...differentialPrompt(s.facts, s.redFlag, s.issues, s.differential),
       context: { facts: s.facts, issues: s.issues, previous: s.differential, attempt: s.checkFailures },
     });
-    return { differential: out };
+    return { differential: { ...out, differentials: out.differentials.slice(0, 4) } };
   }
 
   async function plan(s: ConsultationStateT) {

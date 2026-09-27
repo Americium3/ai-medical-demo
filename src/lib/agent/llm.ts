@@ -88,30 +88,34 @@ export function createGatewayLLM(
         method: "functionCalling",
         includeRaw: true,
       });
-      const started = Date.now();
-      let res: Awaited<ReturnType<typeof runnable.invoke>>;
-      try {
-        res = await runnable.invoke([
-          new SystemMessage(call.system),
-          new HumanMessage(call.user),
-        ]);
-      } catch (err) {
-        throw new AgentLLMError(
-          call.task,
-          err instanceof Error ? err.message : String(err),
-        );
+      // One extra attempt when the reply arrives but does not fit the schema;
+      // HTTP-level retries are already handled by ChatOpenAI's maxRetries.
+      for (let attempt = 1; ; attempt++) {
+        const started = Date.now();
+        let res: Awaited<ReturnType<typeof runnable.invoke>>;
+        try {
+          res = await runnable.invoke([
+            new SystemMessage(call.system),
+            new HumanMessage(call.user),
+          ]);
+        } catch (err) {
+          throw new AgentLLMError(
+            call.task,
+            err instanceof Error ? err.message : String(err),
+          );
+        }
+        const meta = AIMessage.isInstance(res.raw) ? res.raw.usage_metadata : undefined;
+        usage.push({
+          task: call.task,
+          inputTokens: meta?.input_tokens ?? 0,
+          outputTokens: meta?.output_tokens ?? 0,
+          ms: Date.now() - started,
+        });
+        if (res.parsed != null) return res.parsed as T;
+        if (attempt >= 2) {
+          throw new AgentLLMError(call.task, "model returned no valid structured output");
+        }
       }
-      const meta = AIMessage.isInstance(res.raw) ? res.raw.usage_metadata : undefined;
-      usage.push({
-        task: call.task,
-        inputTokens: meta?.input_tokens ?? 0,
-        outputTokens: meta?.output_tokens ?? 0,
-        ms: Date.now() - started,
-      });
-      if (res.parsed == null) {
-        throw new AgentLLMError(call.task, "model returned no valid structured output");
-      }
-      return res.parsed as T;
     },
   };
 }

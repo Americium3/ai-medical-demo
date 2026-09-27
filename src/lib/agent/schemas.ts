@@ -84,11 +84,9 @@ export type RedFlagResult = RedFlagOutput & {
 // ---- ask ----------------------------------------------------------------
 
 export const askOutputSchema = z.object({
-  questions: z
-    .array(z.string())
-    .min(1)
-    .max(2)
-    .describe("下一轮要问患者的问题，口语化，最多两个"),
+  // Bounds are enforced in code (graph.ts), not in the schema: a model that
+  // returns three questions should be trimmed, not fail the whole turn.
+  questions: z.array(z.string()).describe("下一轮要问患者的问题，口语化，最多两个"),
   rationale: z.string().describe("为什么问这些"),
 });
 export type AskOutput = z.infer<typeof askOutputSchema>;
@@ -110,8 +108,7 @@ export const differentialOutputSchema = z.object({
         factIds: z.array(z.string()),
       }),
     )
-    .min(1)
-    .max(4),
+    .describe("2-3 个鉴别诊断"),
 });
 export type DifferentialOutput = z.infer<typeof differentialOutputSchema>;
 
