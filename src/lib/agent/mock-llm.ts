@@ -164,6 +164,21 @@ function mockPlan(ctx: { facts: Fact[] }): PlanOutput {
   };
 }
 
+/**
+ * A one-shot "record" for the eval's offline baselines: the same keyword
+ * table, applied to raw prompt text instead of grounded facts.
+ */
+export function mockRecordFromText(text: string): string {
+  const hit = KNOWLEDGE.map((k) => ({ k, n: (text.match(new RegExp(k.keywords.source, "g")) ?? []).length }))
+    .sort((a, b) => b.n - a.n)[0];
+  const k = hit.n > 0 ? hit.k : null;
+  return `**主诉：** 见对话
+**初步诊断：** ${k?.primary ?? "待明确"}
+**鉴别诊断：** ${k?.differentials.join("、") ?? "—"}
+**辅助检查：** ${k?.tests.join("、") ?? "血常规"}
+**处置建议：** ${k?.medications.join("、") ?? "对症处理"}`;
+}
+
 function mockSelfCheck(): SelfCheckOutput {
   return { pass: true, issues: [] };
 }
