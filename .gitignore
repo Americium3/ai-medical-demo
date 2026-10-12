@@ -47,3 +47,6 @@ __pycache__/
 
 # env example is safe to commit
 !.env.example
+
+# backend demo data
+/backend/data/
