@@ -49,6 +49,17 @@ npm run lint
 npm run typecheck
 ```
 
+## 后端演示（AWS Bedrock）
+
+`backend/` 是独立运行的问诊 Agent 后端：LangGraph 编排，模型走 AWS Bedrock（Claude Haiku 4.5 和 Sonnet 4.6），问诊进度存在 SQLite 里，可以中断后继续。
+
+```bash
+npm run demo        # 在 http://localhost:8787 打开问诊页面
+npm run backend:test
+```
+
+密钥、接口和离线模式见 [backend/README.md](backend/README.md)。
+
 ## 评估
 
 ```bash
