@@ -6,11 +6,23 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test \"tests/**/*.test.ts\" \"backend/tests/**/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "demo": "tsx backend/src/demo.ts",
+    "backend:server": "tsx backend/src/main.ts",
+    "backend:cli": "tsx backend/src/cli.ts",
+    "backend:test": "tsx --test \"backend/tests/**/*.test.ts\""
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.57",
     "@ai-sdk/react": "^3.0.105",
+    "@aws-sdk/client-bedrock-runtime": "^3.1146.0",
+    "@langchain/aws": "^1.4.6",
+    "@langchain/core": "^1.2.13",
+    "@langchain/langgraph": "^1.4.18",
+    "@langchain/langgraph-checkpoint-sqlite": "^1.0.4",
+    "@langchain/openai": "^1.6.0",
     "@vercel/analytics": "^2.0.1",
     "ai": "^6.0.103",
     "next": "16.1.6",
@@ -18,9 +30,11 @@
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
     "recharts": "^3.7.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@smithy/node-http-handler": "^4.12.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -28,6 +42,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

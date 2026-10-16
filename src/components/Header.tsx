@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const navLinks = [
   { href: "/", label: "首页" },
   { href: "/consultation", label: "问诊模拟" },
+  { href: "/agent", label: "问诊 Agent" },
   { href: "/cases", label: "案例病例" },
   { href: "/comparison", label: "模型对比" },
 ];

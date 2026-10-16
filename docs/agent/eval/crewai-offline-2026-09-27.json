@@ -1,0 +1,263 @@
+{
+  "meta": {
+    "date": "2026-09-27T15:55:48.483490",
+    "mode": "offline",
+    "model": "scripted",
+    "judge": "mock",
+    "runs": 1
+  },
+  "results": [
+    {
+      "caseId": "resp-001",
+      "run": 1,
+      "condition": "crew_full",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 74,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 0,
+      "askedInputs": [],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "resp-001",
+      "run": 1,
+      "condition": "crew_interview",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 93,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 1,
+      "askedInputs": [
+        "{\"question\": \"\\u8fd9\\u4e2a\\u60c5\\u51b5\\u591a\\u4e45\\u4e86\\uff1f\\u8fd8\\u6709\\u522b\\u7684\\u4e0d\\u8212\\u670d\\u5417\\uff1f\", \"context\": \"\\u95e8\\u8bca\\u95ee\\u8bca\", \"coworker\": \"\\u60a3\\u8005\"}"
+      ],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "gastro-001",
+      "run": 1,
+      "condition": "crew_full",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 46,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 0,
+      "askedInputs": [],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "gastro-001",
+      "run": 1,
+      "condition": "crew_interview",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 92,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 1,
+      "askedInputs": [
+        "{\"question\": \"\\u8fd9\\u4e2a\\u60c5\\u51b5\\u591a\\u4e45\\u4e86\\uff1f\\u8fd8\\u6709\\u522b\\u7684\\u4e0d\\u8212\\u670d\\u5417\\uff1f\", \"context\": \"\\u95e8\\u8bca\\u95ee\\u8bca\", \"coworker\": \"\\u60a3\\u8005\"}"
+      ],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "cardio-001",
+      "run": 1,
+      "condition": "crew_full",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 48,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 0,
+      "askedInputs": [],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "cardio-001",
+      "run": 1,
+      "condition": "crew_interview",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 76,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 1,
+      "askedInputs": [
+        "{\"question\": \"\\u8fd9\\u4e2a\\u60c5\\u51b5\\u591a\\u4e45\\u4e86\\uff1f\\u8fd8\\u6709\\u522b\\u7684\\u4e0d\\u8212\\u670d\\u5417\\uff1f\", \"context\": \"\\u95e8\\u8bca\\u95ee\\u8bca\", \"coworker\": \"\\u60a3\\u8005\"}"
+      ],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "neuro-001",
+      "run": 1,
+      "condition": "crew_full",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 65,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 0,
+      "askedInputs": [],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "neuro-001",
+      "run": 1,
+      "condition": "crew_interview",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 75,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 1,
+      "askedInputs": [
+        "{\"question\": \"\\u8fd9\\u4e2a\\u60c5\\u51b5\\u591a\\u4e45\\u4e86\\uff1f\\u8fd8\\u6709\\u522b\\u7684\\u4e0d\\u8212\\u670d\\u5417\\uff1f\", \"context\": \"\\u95e8\\u8bca\\u95ee\\u8bca\", \"coworker\": \"\\u60a3\\u8005\"}"
+      ],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "ortho-001",
+      "run": 1,
+      "condition": "crew_full",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 43,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 0,
+      "askedInputs": [],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "ortho-001",
+      "run": 1,
+      "condition": "crew_interview",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 76,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 1,
+      "askedInputs": [
+        "{\"question\": \"\\u8fd9\\u4e2a\\u60c5\\u51b5\\u591a\\u4e45\\u4e86\\uff1f\\u8fd8\\u6709\\u522b\\u7684\\u4e0d\\u8212\\u670d\\u5417\\uff1f\", \"context\": \"\\u95e8\\u8bca\\u95ee\\u8bca\", \"coworker\": \"\\u60a3\\u8005\"}"
+      ],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "endo-001",
+      "run": 1,
+      "condition": "crew_full",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 47,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 0,
+      "askedInputs": [],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    },
+    {
+      "caseId": "endo-001",
+      "run": 1,
+      "condition": "crew_interview",
+      "ok": true,
+      "scores": {
+        "accuracy": 20,
+        "completeness": 14,
+        "standardization": 70,
+        "recommendation": 0,
+        "comments": "mock judge"
+      },
+      "total": 27.6,
+      "ms": 77,
+      "tokens": 0,
+      "calls": 0,
+      "questions": 1,
+      "askedInputs": [
+        "{\"question\": \"\\u8fd9\\u4e2a\\u60c5\\u51b5\\u591a\\u4e45\\u4e86\\uff1f\\u8fd8\\u6709\\u522b\\u7684\\u4e0d\\u8212\\u670d\\u5417\\uff1f\", \"context\": \"\\u95e8\\u8bca\\u95ee\\u8bca\", \"coworker\": \"\\u60a3\\u8005\"}"
+      ],
+      "output": "**审核意见：** 通过。\n\n**初步诊断：** 待明确"
+    }
+  ]
+}
