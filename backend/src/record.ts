@@ -1,3 +1,5 @@
+import { isGroundedQuote, normalize } from "../../shared/safety/grounding";
+
 /**
  * The consultation record table (design doc §7.2, §8.2): one entry per
  * template slot, saved with the graph state after every step. It is the
@@ -22,10 +24,7 @@ export function emptyRecord(slotIds: string[]): RecordTable {
   return Object.fromEntries(slotIds.map((id) => [id, { status: "unasked" as const }]));
 }
 
-/** Strip whitespace and punctuation so quote matching ignores formatting. */
-export function normalize(text: string): string {
-  return text.replace(/[\s\p{P}\p{S}]/gu, "").toLowerCase();
-}
+export { normalize };
 
 export interface SlotUpdate {
   slotId: string;
@@ -37,7 +36,8 @@ export interface SlotUpdate {
 /**
  * Apply model-proposed updates, keeping only those that are grounded:
  * the slot must exist, and an "answered" update must quote text that really
- * appears in what the patient said. Returns the new table and the rejects.
+ * appears in what the patient said and supports the value
+ * (shared/safety/grounding.ts). Returns the new table and the rejects.
  */
 export function applyUpdates(
   record: RecordTable,
@@ -47,7 +47,6 @@ export function applyUpdates(
 ): { record: RecordTable; rejected: SlotUpdate[] } {
   const next: RecordTable = { ...record };
   const rejected: SlotUpdate[] = [];
-  const haystack = normalize(patientText);
 
   for (const u of updates) {
     if (!(u.slotId in next)) {
@@ -55,8 +54,7 @@ export function applyUpdates(
       continue;
     }
     if (u.status === "answered") {
-      const needle = normalize(u.quote ?? "");
-      if (!needle || !haystack.includes(needle)) {
+      if (!isGroundedQuote(u.quote ?? "", [patientText], u.value ?? "")) {
         rejected.push(u);
         continue;
       }

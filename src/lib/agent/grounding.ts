@@ -1,9 +1,7 @@
+import { isGroundedQuote, normalize } from "../../../shared/safety/grounding";
 import type { Fact, IntakeOutput, Turn } from "./schemas";
 
-/** Strip whitespace and punctuation so quote matching ignores formatting. */
-export function normalize(text: string): string {
-  return text.replace(/[\s\p{P}\p{S}]/gu, "").toLowerCase();
-}
+export { normalize };
 
 export function patientText(transcript: Turn[]): string {
   return transcript
@@ -13,7 +11,9 @@ export function patientText(transcript: Turn[]): string {
 }
 
 /**
- * Keep only facts whose quote appears verbatim in what the patient said.
+ * Keep only facts whose quote appears verbatim in one patient turn and is real
+ * evidence for the statement (shared/safety/grounding.ts: not too short, related
+ * to the statement, not something the patient denied).
  * This is the deterministic half of the anti-hallucination design: the model
  * may paraphrase in `statement`, but it must point at real patient words.
  */
@@ -21,13 +21,12 @@ export function groundFacts(
   facts: IntakeOutput["facts"],
   transcript: Turn[],
 ): { kept: Fact[]; dropped: IntakeOutput["facts"] } {
-  const haystack = normalize(patientText(transcript));
+  const turns = transcript.filter((t) => t.role === "patient").map((t) => t.content);
   const kept: Fact[] = [];
   const dropped: IntakeOutput["facts"] = [];
 
   for (const f of facts) {
-    const needle = normalize(f.quote);
-    if (needle.length > 0 && haystack.includes(needle)) {
+    if (isGroundedQuote(f.quote, turns, f.statement)) {
       kept.push({ ...f, id: `F${kept.length + 1}` });
     } else {
       dropped.push(f);
