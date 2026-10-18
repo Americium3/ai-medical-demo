@@ -1,4 +1,5 @@
 import type { State } from "./graph";
+import { citeSource, guidelineById } from "./guidelines";
 import { slotsFor, type Template } from "./templates";
 import { LEVEL_NAME } from "./triage";
 
@@ -10,6 +11,11 @@ function quotes(s: State, ids: string[]): string {
     .filter(Boolean)
     .map((x) => `“${x}”`);
   return q.length ? `（患者原话：${q.join("；")}）` : "";
+}
+
+function sourcesOf(ids: string[]): string {
+  const cited = [...new Set(ids.map((id) => guidelineById(id)?.source).filter((x) => !!x))];
+  return cited.length ? `【依据：${cited.map((c) => citeSource(c!)).join("；")}】` : "【无指南出处】";
 }
 
 /** The draft record for the doctor, rendered by code from validated structures. */
@@ -39,9 +45,10 @@ export function renderNote(template: Template, s: State): string {
     "【仅供医生参考】",
     `病情分级：${LEVEL_NAME[s.level]}。${s.levelReason}`,
     "可能的原因：",
-    ...n.forDoctor.possibleCauses.map((c) => `  - ${c.name}：${c.reasoning}`),
+    ...(n.forDoctor.possibleCauses.length ? n.forDoctor.possibleCauses.map((c) => `  - ${c.name}：${c.reasoning}${sourcesOf(c.sources)}`) : ["  - 无"]),
     "建议检查：",
-    ...(n.forDoctor.suggestedTests.length ? n.forDoctor.suggestedTests.map((t) => `  - ${t.name}（${t.purpose}）`) : ["  - 无"]),
+    ...(n.forDoctor.suggestedTests.length ? n.forDoctor.suggestedTests.map((t) => `  - ${t.name}（${t.purpose}）${sourcesOf(t.sources)}`) : ["  - 无"]),
+    "指南出处为演示语料中的要点转述，请以指南原文为准。",
     `自查结果：${review}`,
     "",
     DISCLAIMER,

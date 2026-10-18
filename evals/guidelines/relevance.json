@@ -1,0 +1,9 @@
+{
+  "_comment": "Guideline passages (backend/src/guidelines.ts) relevant to each demo case. Used by scripts/eval-backend.ts for the retrieval hit rate.",
+  "resp-001": ["resp-cap-imaging", "resp-cap-crp", "resp-cough-duration"],
+  "gastro-001": ["abd-diarrhea-stool", "abd-ibs-alarm"],
+  "cardio-001": ["chest-angina-ctca", "chest-acs-ecg", "chest-palpitations-ecg", "chest-risk-factors"],
+  "neuro-001": ["head-diary", "head-red-flags", "head-vertigo-positional", "head-htn-bp"],
+  "ortho-001": ["back-imaging", "back-red-flags"],
+  "endo-001": ["endo-dm-diagnosis", "endo-ketones", "endo-thyroid"]
+}

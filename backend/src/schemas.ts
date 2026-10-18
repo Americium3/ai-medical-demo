@@ -28,15 +28,17 @@ const cited = z.object({
   slotIds: z.array(z.string()).describe("这句话依据的记录表要点编号"),
 });
 
+const guidelineSources = z.array(z.string()).describe("这条建议依据的指南片段编号（方括号里的编号），至少一个");
+
 export const noteSchema = z.object({
   chiefComplaint: cited,
   presentIllness: z.array(cited),
   pastHistory: z.array(cited),
   forDoctor: z.object({
     possibleCauses: z.array(
-      z.object({ name: z.string(), reasoning: z.string(), slotIds: z.array(z.string()) }),
+      z.object({ name: z.string(), reasoning: z.string(), slotIds: z.array(z.string()), sources: guidelineSources }),
     ),
-    suggestedTests: z.array(z.object({ name: z.string(), purpose: z.string() })),
+    suggestedTests: z.array(z.object({ name: z.string(), purpose: z.string(), sources: guidelineSources })),
   }),
 });
 export type NoteOutput = z.infer<typeof noteSchema>;

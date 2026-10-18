@@ -105,7 +105,7 @@ var LEVELS = { "Ⅰ": 1, "Ⅱ": 2, "Ⅲ": 3, "Ⅳ": 4 };
 var LEVEL_EN = { 1: "Level Ⅰ · Resuscitation", 2: "Level Ⅱ · Emergent", 3: "Level Ⅲ · Urgent", 4: "Level Ⅳ · Non-urgent" };
 var KIND = { redflag: "red flag", required: "required", discriminating: "differentiating", optional: "optional" };
 var STATUS = { answered: "Answered", unknown: "Patient unsure", unasked: "Not asked" };
-var NODE = { setup: "pick template", screen: "red-flag rules", understand: "update record", triage: "triage", phrase: "rephrase questions", ask: "plan questions", wait: "patient answered", draft: "draft note", check: "self-check", finalize: "finish", emergency: "emergency stop" };
+var NODE = { setup: "pick template", screen: "red-flag rules", understand: "update record", triage: "triage", phrase: "rephrase questions", ask: "plan questions", wait: "patient answered", retrieve: "guideline search", draft: "draft note", check: "self-check", finalize: "finish", emergency: "emergency stop" };
 var EXAMPLES = ["我最近两周老是胸闷，上楼的时候更明显。", "我胸口痛了一个小时，现在全身出大汗。", "咳嗽三天了，昨天开始发烧，最高38.5度。", "肚子疼，拉肚子一天了。"];
 
 var key = "";

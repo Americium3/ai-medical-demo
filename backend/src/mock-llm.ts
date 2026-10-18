@@ -3,6 +3,7 @@
  * API and CLI can be run and tested without AWS credentials. Its clinical
  * judgement is keyword matching; it says nothing about real model quality.
  */
+import type { GuidelinePassage } from "./guidelines";
 import { consultationScope, type LLM, type StructuredCall, type Task, type UsageRecord } from "./llm";
 import type { RecordTable } from "./record";
 import type { ExtractOutput, NoteOutput, PhraseOutput, ReviewOutput, TriageOutput } from "./schemas";
@@ -66,7 +67,7 @@ function mockExtract(ctx: ExtractContext): ExtractOutput {
   return { updates };
 }
 
-function mockNote(ctx: { template: Template; record: RecordTable; complaint: string }): NoteOutput {
+function mockNote(ctx: { template: Template; record: RecordTable; complaint: string; passages: GuidelinePassage[] }): NoteOutput {
   const answered = slotsFor(ctx.template).filter((s) => ctx.record[s.id].status === "answered");
   const past = new Set(["pmh", "meds", "allergy", "family_cv", "cv_risk"]);
   const line = (s: Slot) => ({ text: `${s.label}：${ctx.record[s.id].value}`, slotIds: [s.id] });
@@ -75,9 +76,13 @@ function mockNote(ctx: { template: Template; record: RecordTable; complaint: str
     chiefComplaint: { text: ctx.complaint.replace(/^(医生)?(您好|你好)?[，,]?\s*(我)?/, "").replace(/。$/, ""), slotIds: onset ? ["onset"] : [] },
     presentIllness: answered.filter((s) => !past.has(s.id)).map(line),
     pastHistory: answered.filter((s) => past.has(s.id)).map(line),
+    // No diagnosis offline; the tests come straight from the top retrieved guideline passages.
     forDoctor: {
-      possibleCauses: [{ name: "（离线模式不给出诊断参考）", reasoning: "需接入真实模型", slotIds: [] }],
-      suggestedTests: [],
+      possibleCauses: [],
+      suggestedTests: ctx.passages
+        .filter((g) => g.suggests)
+        .slice(0, 2)
+        .map((g) => ({ ...g.suggests!, sources: [g.id] })),
     },
   };
 }

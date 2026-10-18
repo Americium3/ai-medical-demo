@@ -1,0 +1,539 @@
+{
+  "meta": {
+    "date": "2026-10-18T20:55:25.918Z",
+    "mode": "mock",
+    "agent": "mock",
+    "patient": "scripted",
+    "judge": "mock",
+    "runs": 1,
+    "phrasing": "model",
+    "cases": [
+      "resp-001",
+      "gastro-001",
+      "cardio-001",
+      "neuro-001",
+      "ortho-001",
+      "endo-001"
+    ]
+  },
+  "results": [
+    {
+      "caseId": "resp-001",
+      "run": 1,
+      "ok": true,
+      "status": "completed",
+      "rounds": 4,
+      "level": "Ⅳ级 非急症",
+      "record": {
+        "unasked": 3,
+        "answered": 7,
+        "unknown": 2
+      },
+      "groundingRejects": 1,
+      "usage": {
+        "calls": 16,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "costUsd": null,
+        "ms": 0
+      },
+      "wallMs": 153,
+      "judge": {
+        "completeness": 55,
+        "accuracy": 100,
+        "unsupported": [],
+        "comments": "mock judge"
+      },
+      "citations": {
+        "retrieved": [
+          "resp-cough-duration",
+          "resp-cap-imaging",
+          "resp-cap-crp",
+          "head-red-flags"
+        ],
+        "relevantRetrieved": 3,
+        "relevantTotal": 3,
+        "suggestions": 2,
+        "cited": 2,
+        "pairs": [
+          {
+            "suggestion": "胸部X线（慢性咳嗽的初始检查）",
+            "passage": "咳嗽按病程分为急性（<3周）、亚急性（3～8周）和慢性（>8周）；慢性咳嗽应首先做胸部X线检查。",
+            "supported": true
+          },
+          {
+            "suggestion": "胸部X线或CT和血常规（判断是否为肺炎）",
+            "passage": "社区获得性肺炎的临床诊断依据包括新近出现的咳嗽、咳痰、发热、肺部湿啰音、外周血白细胞异常，以及胸部影像学显示新出现的浸润影；怀疑肺炎时应做胸部影像检查和血常规。",
+            "supported": true
+          }
+        ]
+      },
+      "transcript": [
+        {
+          "role": "patient",
+          "content": "医生您好，我咳嗽、发热一周，伴有黄痰。"
+        },
+        {
+          "role": "agent",
+          "content": "有没有喘不上气、呼吸困难的感觉？ 能具体说说是什么样的感觉吗？严重到什么程度？"
+        },
+        {
+          "role": "patient",
+          "content": "稍微有点胸闷，深呼吸的时候右边有点疼。这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "除了这些，还有没有别的不舒服？ 以前有没有什么病，比如高血压、糖尿病？"
+        },
+        {
+          "role": "patient",
+          "content": "医生您好，我咳嗽大概一个星期了，还有点发烧。没有什么特别的病史，也没有药物过敏。"
+        },
+        {
+          "role": "agent",
+          "content": "有没有对什么药物或食物过敏？ 发烧最高到多少度？"
+        },
+        {
+          "role": "patient",
+          "content": "没有什么特别的病史，也没有药物过敏。最高38.5度，有痰，黄色的，比较粘稠。"
+        },
+        {
+          "role": "agent",
+          "content": "有痰吗？是什么颜色的？ 有没有什么诱因？什么情况下会加重？"
+        },
+        {
+          "role": "patient",
+          "content": "最高38.5度，有痰，黄色的，比较粘稠。这个我不太清楚。"
+        }
+      ],
+      "output": "【门诊病历草稿】\n主诉：咳嗽、发热一周，伴有黄痰\n现病史：\n  - 最高体温：最高38.5度（患者原话：“最高38.5度”）\n  - 起病时间与病程：我咳嗽、发热一周（患者原话：“我咳嗽、发热一周”）\n  - 症状性质与程度：稍微有点胸闷（患者原话：“稍微有点胸闷”）\n  - 伴随症状：还有点发烧（患者原话：“还有点发烧”）\n既往史：\n  - 既往病史：没有什么特别的病史（患者原话：“没有什么特别的病史”）\n  - 正在用的药：也没有药物过敏（患者原话：“也没有药物过敏”）\n  - 过敏史：也没有药物过敏（患者原话：“也没有药物过敏”）\n患者表示不清楚的项目：是否呼吸困难、诱因与加重因素\n\n【仅供医生参考】\n病情分级：Ⅳ级 非急症。离线模式：由规则判断危险等级\n可能的原因：\n  - 无\n建议检查：\n  - 胸部X线（慢性咳嗽的初始检查）【依据：《咳嗽的诊断与治疗指南（2021）》，中华医学会呼吸病学分会哮喘学组，2021】\n  - 胸部X线或CT和血常规（判断是否为肺炎）【依据：《中国成人社区获得性肺炎诊断和治疗指南（2016年版）》，中华医学会呼吸病学分会，2016】\n指南出处为演示语料中的要点转述，请以指南原文为准。\n自查结果：通过\n\n以上为AI预问诊生成的病历草稿，体格检查、诊断和处置须由接诊医生完成并签名。"
+    },
+    {
+      "caseId": "gastro-001",
+      "run": 1,
+      "ok": true,
+      "status": "completed",
+      "rounds": 4,
+      "level": "Ⅳ级 非急症",
+      "record": {
+        "unasked": 4,
+        "answered": 3,
+        "unknown": 6
+      },
+      "groundingRejects": 0,
+      "usage": {
+        "calls": 16,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "costUsd": null,
+        "ms": 0
+      },
+      "wallMs": 68,
+      "judge": {
+        "completeness": 57,
+        "accuracy": 100,
+        "unsupported": [],
+        "comments": "mock judge"
+      },
+      "citations": {
+        "retrieved": [
+          "abd-ibs-alarm",
+          "abd-diarrhea-stool"
+        ],
+        "relevantRetrieved": 2,
+        "relevantTotal": 2,
+        "suggestions": 2,
+        "cited": 2,
+        "pairs": [
+          {
+            "suggestion": "结肠镜（有报警征象时排除器质性肠病）",
+            "passage": "反复腹痛伴排便习惯改变者，若有报警征象（如便血、不明原因消瘦、贫血、发热、夜间症状、40岁以上新发症状、结直肠癌家族史），应行结肠镜等检查排除器质性疾病。",
+            "supported": true
+          },
+          {
+            "suggestion": "粪便常规（判断腹泻是否为感染性）",
+            "passage": "急性腹泻患者应做粪便常规检查（白细胞、红细胞、潜血）；伴发热、血便或病情较重者，建议做粪便病原学检查（如培养）。",
+            "supported": true
+          }
+        ]
+      },
+      "transcript": [
+        {
+          "role": "patient",
+          "content": "医生您好，我反复腹痛、腹泻三天，伴恶心。"
+        },
+        {
+          "role": "agent",
+          "content": "有没有吐血，或者大便发黑？ 肚子疼得厉害吗？有没有疼得一直缓解不了？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "能具体说说是什么样的感觉吗？严重到什么程度？ 除了这些，还有没有别的不舒服？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "以前有没有什么病，比如高血压、糖尿病？ 有没有对什么药物或食物过敏？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "发病前吃过什么不太干净或者特别的东西吗？ 一天拉几次？大便是什么样的？"
+        },
+        {
+          "role": "patient",
+          "content": "前天晚上在外面吃了烧烤和生蚝。一天五六次，水样便，有时候带点粘液。"
+        }
+      ],
+      "output": "【门诊病历草稿】\n主诉：反复腹痛、腹泻三天，伴恶心\n现病史：\n  - 饮食情况：前天晚上在外面吃了烧烤和生蚝（患者原话：“前天晚上在外面吃了烧烤和生蚝”）\n  - 大便次数与性状：一天五六次（患者原话：“一天五六次”）\n  - 起病时间与病程：我反复腹痛、腹泻三天（患者原话：“我反复腹痛、腹泻三天”）\n既往史：\n  - 未获得\n患者表示不清楚的项目：是否呕血或黑便、是否剧烈腹痛持续不缓解、症状性质与程度、伴随症状、既往病史、过敏史\n\n【仅供医生参考】\n病情分级：Ⅳ级 非急症。离线模式：由规则判断危险等级\n可能的原因：\n  - 无\n建议检查：\n  - 结肠镜（有报警征象时排除器质性肠病）【依据：《2020年中国肠易激综合征专家共识意见》，中华医学会消化病学分会胃肠功能性疾病协作组，2020】\n  - 粪便常规（判断腹泻是否为感染性）【依据：《成人急性感染性腹泻诊疗专家共识》，中华医学会感染病学分会，2013】\n指南出处为演示语料中的要点转述，请以指南原文为准。\n自查结果：通过\n\n以上为AI预问诊生成的病历草稿，体格检查、诊断和处置须由接诊医生完成并签名。"
+    },
+    {
+      "caseId": "cardio-001",
+      "run": 1,
+      "ok": true,
+      "status": "completed",
+      "rounds": 3,
+      "level": "Ⅲ级 急症",
+      "record": {
+        "unasked": 2,
+        "answered": 7,
+        "unknown": 4
+      },
+      "groundingRejects": 0,
+      "usage": {
+        "calls": 13,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "costUsd": null,
+        "ms": 0
+      },
+      "wallMs": 60,
+      "judge": {
+        "completeness": 47,
+        "accuracy": 100,
+        "unsupported": [],
+        "comments": "mock judge"
+      },
+      "citations": {
+        "retrieved": [
+          "chest-angina-ctca",
+          "chest-acs-ecg",
+          "head-htn-bp",
+          "chest-risk-factors"
+        ],
+        "relevantRetrieved": 3,
+        "relevantTotal": 4,
+        "suggestions": 2,
+        "cited": 2,
+        "pairs": [
+          {
+            "suggestion": "冠状动脉CT血管成像（评估活动相关胸闷是否为冠心病心绞痛）",
+            "passage": "与活动相关、休息可缓解的胸痛或胸闷，疑似稳定型心绞痛时，首选冠状动脉CT血管成像（CTCA）作为无创检查。",
+            "supported": true
+          },
+          {
+            "suggestion": "12导联心电图和心肌肌钙蛋白（排查急性冠脉综合征）",
+            "passage": "疑似急性冠脉综合征的胸痛、胸闷患者，应在首次医疗接触后10分钟内完成12导联心电图，并尽快检测心肌肌钙蛋白（首选高敏肌钙蛋白），必要时复查。",
+            "supported": true
+          }
+        ]
+      },
+      "transcript": [
+        {
+          "role": "patient",
+          "content": "医生您好，我反复胸闷、心悸两周，活动后加重。"
+        },
+        {
+          "role": "agent",
+          "content": "胸口不舒服的时候，有没有出大汗，或者喘不上气？ 休息的时候会不会也一直痛，二十分钟以上都不缓解？"
+        },
+        {
+          "role": "patient",
+          "content": "医生，我最近两周总是胸闷，心跳得很快。这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "能具体说说是什么样的感觉吗？严重到什么程度？ 除了这些，还有没有别的不舒服？"
+        },
+        {
+          "role": "patient",
+          "content": "偶尔有一点闷痛，不是很剧烈，没有放射。这个我不太清楚。医生，我最近两周总是胸闷，心跳得很快。"
+        },
+        {
+          "role": "agent",
+          "content": "以前有没有什么病，比如高血压、糖尿病？ 有没有对什么药物或食物过敏？"
+        },
+        {
+          "role": "patient",
+          "content": "有高血压十年了，吃着降压药，血脂也偏高。这个我不太清楚。"
+        }
+      ],
+      "output": "【门诊病历草稿】\n主诉：反复胸闷、心悸两周，活动后加重\n现病史：\n  - 与活动的关系：活动后加重（患者原话：“活动后加重”）\n  - 起病时间与病程：我反复胸闷、心悸两周（患者原话：“我反复胸闷、心悸两周”）\n  - 症状性质与程度：偶尔有一点闷痛（患者原话：“偶尔有一点闷痛”）\n  - 诱因与加重因素：活动后加重（患者原话：“活动后加重”）\n既往史：\n  - 心血管危险因素：有高血压十年了（患者原话：“有高血压十年了”）\n  - 既往病史：有高血压十年了（患者原话：“有高血压十年了”）\n  - 正在用的药：吃着降压药（患者原话：“吃着降压药”）\n患者表示不清楚的项目：是否伴大汗或呼吸困难、休息时是否持续不缓解、伴随症状、过敏史\n\n【仅供医生参考】\n病情分级：Ⅲ级 急症。离线模式：由规则判断危险等级（规则兜底：活动相关胸闷胸痛）\n可能的原因：\n  - 无\n建议检查：\n  - 冠状动脉CT血管成像（评估活动相关胸闷是否为冠心病心绞痛）【依据：《Recent-onset chest pain of suspected cardiac origin: assessment and diagnosis (CG95)》，NICE，2016】\n  - 12导联心电图和心肌肌钙蛋白（排查急性冠脉综合征）【依据：《急性冠脉综合征急诊快速诊治指南（2019）》，中国医师协会急诊医师分会等，2019】\n指南出处为演示语料中的要点转述，请以指南原文为准。\n自查结果：通过\n\n以上为AI预问诊生成的病历草稿，体格检查、诊断和处置须由接诊医生完成并签名。"
+    },
+    {
+      "caseId": "neuro-001",
+      "run": 1,
+      "ok": true,
+      "status": "completed",
+      "rounds": 4,
+      "level": "Ⅳ级 非急症",
+      "record": {
+        "unasked": 4,
+        "answered": 1,
+        "unknown": 8
+      },
+      "groundingRejects": 0,
+      "usage": {
+        "calls": 16,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "costUsd": null,
+        "ms": 0
+      },
+      "wallMs": 81,
+      "judge": {
+        "completeness": 40,
+        "accuracy": 100,
+        "unsupported": [],
+        "comments": "mock judge"
+      },
+      "citations": {
+        "retrieved": [
+          "abd-ibs-alarm",
+          "head-diary",
+          "abd-diarrhea-stool",
+          "head-vertigo-positional"
+        ],
+        "relevantRetrieved": 2,
+        "relevantTotal": 4,
+        "suggestions": 2,
+        "cited": 2,
+        "pairs": [
+          {
+            "suggestion": "结肠镜（有报警征象时排除器质性肠病）",
+            "passage": "反复腹痛伴排便习惯改变者，若有报警征象（如便血、不明原因消瘦、贫血、发热、夜间症状、40岁以上新发症状、结直肠癌家族史），应行结肠镜等检查排除器质性疾病。",
+            "supported": true
+          },
+          {
+            "suggestion": "头痛日记（记录发作规律和诱因，协助分型）",
+            "passage": "无警示征象的偏头痛或紧张型头痛，不要仅为让患者放心而做神经影像检查；建议患者记录头痛日记（发作频率、持续时间、诱因、用药）以协助诊断。",
+            "supported": true
+          }
+        ]
+      },
+      "transcript": [
+        {
+          "role": "patient",
+          "content": "医生您好，我反复头痛一个月，伴眩晕、恶心。"
+        },
+        {
+          "role": "agent",
+          "content": "有没有吐血，或者大便发黑？ 肚子疼得厉害吗？有没有疼得一直缓解不了？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "能具体说说是什么样的感觉吗？严重到什么程度？ 除了这些，还有没有别的不舒服？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "以前有没有什么病，比如高血压、糖尿病？ 有没有对什么药物或食物过敏？"
+        },
+        {
+          "role": "patient",
+          "content": "工作压力大或者睡不好的时候容易犯，月经前也会。这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "发病前吃过什么不太干净或者特别的东西吗？ 一天拉几次？大便是什么样的？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        }
+      ],
+      "output": "【门诊病历草稿】\n主诉：反复头痛一个月，伴眩晕、恶心\n现病史：\n  - 起病时间与病程：我反复头痛一个月（患者原话：“我反复头痛一个月”）\n既往史：\n  - 未获得\n患者表示不清楚的项目：是否呕血或黑便、是否剧烈腹痛持续不缓解、饮食情况、大便次数与性状、症状性质与程度、伴随症状、既往病史、过敏史\n\n【仅供医生参考】\n病情分级：Ⅳ级 非急症。离线模式：由规则判断危险等级\n可能的原因：\n  - 无\n建议检查：\n  - 结肠镜（有报警征象时排除器质性肠病）【依据：《2020年中国肠易激综合征专家共识意见》，中华医学会消化病学分会胃肠功能性疾病协作组，2020】\n  - 头痛日记（记录发作规律和诱因，协助分型）【依据：《Headaches in over 12s: diagnosis and management (CG150)》，NICE，2021】\n指南出处为演示语料中的要点转述，请以指南原文为准。\n自查结果：通过\n\n以上为AI预问诊生成的病历草稿，体格检查、诊断和处置须由接诊医生完成并签名。"
+    },
+    {
+      "caseId": "ortho-001",
+      "run": 1,
+      "ok": true,
+      "status": "completed",
+      "rounds": 3,
+      "level": "Ⅳ级 非急症",
+      "record": {
+        "unasked": 1,
+        "answered": 3,
+        "unknown": 4
+      },
+      "groundingRejects": 0,
+      "usage": {
+        "calls": 13,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "costUsd": null,
+        "ms": 0
+      },
+      "wallMs": 55,
+      "judge": {
+        "completeness": 63,
+        "accuracy": 100,
+        "unsupported": [],
+        "comments": "mock judge"
+      },
+      "citations": {
+        "retrieved": [
+          "back-imaging",
+          "chest-angina-ctca"
+        ],
+        "relevantRetrieved": 1,
+        "relevantTotal": 2,
+        "suggestions": 2,
+        "cited": 2,
+        "pairs": [
+          {
+            "suggestion": "暂不常规影像，专科评估后决定是否做MRI（避免不必要的影像检查）",
+            "passage": "非专科机构不要常规为腰痛（伴或不伴坐骨神经痛）安排影像学检查；仅当影像结果可能改变处理方案时，才在专科评估中考虑影像检查。",
+            "supported": false
+          },
+          {
+            "suggestion": "冠状动脉CT血管成像（评估活动相关胸闷是否为冠心病心绞痛）",
+            "passage": "与活动相关、休息可缓解的胸痛或胸闷，疑似稳定型心绞痛时，首选冠状动脉CT血管成像（CTCA）作为无创检查。",
+            "supported": true
+          }
+        ]
+      },
+      "transcript": [
+        {
+          "role": "patient",
+          "content": "医生您好，我腰背疼痛三个月，伴左下肢放射痛。"
+        },
+        {
+          "role": "agent",
+          "content": "能具体说说是什么样的感觉吗？严重到什么程度？ 除了这些，还有没有别的不舒服？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。医生，我腰疼了快三个月了，最近左腿也开始疼了。"
+        },
+        {
+          "role": "agent",
+          "content": "以前有没有什么病，比如高血压、糖尿病？ 有没有对什么药物或食物过敏？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "有没有什么诱因？什么情况下会加重？ 做什么能让它好一些？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。会的，打喷嚏的时候腰和腿都会疼加重。"
+        }
+      ],
+      "output": "【门诊病历草稿】\n主诉：腰背疼痛三个月，伴左下肢放射痛\n现病史：\n  - 起病时间与病程：我腰背疼痛三个月（患者原话：“我腰背疼痛三个月”）\n  - 症状性质与程度：我腰疼了快三个月了（患者原话：“我腰疼了快三个月了”）\n  - 诱因与加重因素：打喷嚏的时候腰和腿都会疼加重（患者原话：“打喷嚏的时候腰和腿都会疼加重”）\n既往史：\n  - 未获得\n患者表示不清楚的项目：缓解因素、伴随症状、既往病史、过敏史\n\n【仅供医生参考】\n病情分级：Ⅳ级 非急症。离线模式：由规则判断危险等级\n可能的原因：\n  - 无\n建议检查：\n  - 暂不常规影像，专科评估后决定是否做MRI（避免不必要的影像检查）【依据：《Low back pain and sciatica in over 16s: assessment and management (NG59)》，NICE，2020】\n  - 冠状动脉CT血管成像（评估活动相关胸闷是否为冠心病心绞痛）【依据：《Recent-onset chest pain of suspected cardiac origin: assessment and diagnosis (CG95)》，NICE，2016】\n指南出处为演示语料中的要点转述，请以指南原文为准。\n自查结果：通过\n\n以上为AI预问诊生成的病历草稿，体格检查、诊断和处置须由接诊医生完成并签名。"
+    },
+    {
+      "caseId": "endo-001",
+      "run": 1,
+      "ok": true,
+      "status": "completed",
+      "rounds": 3,
+      "level": "Ⅳ级 非急症",
+      "record": {
+        "unasked": 0,
+        "answered": 3,
+        "unknown": 5
+      },
+      "groundingRejects": 0,
+      "usage": {
+        "calls": 13,
+        "inputTokens": 0,
+        "outputTokens": 0,
+        "costUsd": null,
+        "ms": 0
+      },
+      "wallMs": 53,
+      "judge": {
+        "completeness": 56,
+        "accuracy": 100,
+        "unsupported": [],
+        "comments": "mock judge"
+      },
+      "citations": {
+        "retrieved": [
+          "endo-dm-diagnosis",
+          "endo-ketones",
+          "endo-thyroid",
+          "chest-risk-factors"
+        ],
+        "relevantRetrieved": 3,
+        "relevantTotal": 3,
+        "suggestions": 2,
+        "cited": 2,
+        "pairs": [
+          {
+            "suggestion": "空腹血糖和糖化血红蛋白（判断是否为糖尿病）",
+            "passage": "有典型糖尿病症状（烦渴多饮、多尿、多食、不明原因体重下降），加随机血糖≥11.1 mmol/L，或空腹血糖≥7.0 mmol/L，或OGTT 2小时血糖≥11.1 mmol/L，或糖化血红蛋白≥6.5%，可诊断糖尿病。",
+            "supported": true
+          },
+          {
+            "suggestion": "尿酮体（排查糖尿病酮症）",
+            "passage": "高血糖伴明显体重下降、乏力或恶心呕吐者，应检测尿酮体或血酮，排查糖尿病酮症。",
+            "supported": true
+          }
+        ]
+      },
+      "transcript": [
+        {
+          "role": "patient",
+          "content": "医生您好，我多饮多尿两个月，体重下降5公斤。"
+        },
+        {
+          "role": "agent",
+          "content": "能具体说说是什么样的感觉吗？严重到什么程度？ 除了这些，还有没有别的不舒服？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。医生，我最近两个月特别容易口渴，喝很多水，上厕所也很频繁。"
+        },
+        {
+          "role": "agent",
+          "content": "以前有没有什么病，比如高血压、糖尿病？ 有没有对什么药物或食物过敏？"
+        },
+        {
+          "role": "patient",
+          "content": "我母亲有糖尿病，吃了十多年的药了。这个我不太清楚。"
+        },
+        {
+          "role": "agent",
+          "content": "有没有什么诱因？什么情况下会加重？ 做什么能让它好一些？"
+        },
+        {
+          "role": "patient",
+          "content": "这个我不太清楚。"
+        }
+      ],
+      "output": "【门诊病历草稿】\n主诉：多饮多尿两个月，体重下降5公斤\n现病史：\n  - 起病时间与病程：我多饮多尿两个月（患者原话：“我多饮多尿两个月”）\n既往史：\n  - 既往病史：我母亲有糖尿病（患者原话：“我母亲有糖尿病”）\n  - 正在用的药：吃了十多年的药了（患者原话：“吃了十多年的药了”）\n患者表示不清楚的项目：症状性质与程度、诱因与加重因素、缓解因素、伴随症状、过敏史\n\n【仅供医生参考】\n病情分级：Ⅳ级 非急症。离线模式：由规则判断危险等级\n可能的原因：\n  - 无\n建议检查：\n  - 空腹血糖和糖化血红蛋白（判断是否为糖尿病）【依据：《中国2型糖尿病防治指南（2020年版）》，中华医学会糖尿病学分会，2020】\n  - 尿酮体（排查糖尿病酮症）【依据：《中国2型糖尿病防治指南（2020年版）》，中华医学会糖尿病学分会，2020】\n指南出处为演示语料中的要点转述，请以指南原文为准。\n自查结果：通过\n\n以上为AI预问诊生成的病历草稿，体格检查、诊断和处置须由接诊医生完成并签名。"
+    }
+  ]
+}

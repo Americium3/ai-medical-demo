@@ -15,13 +15,19 @@
  * Per consultation it records calls, tokens, cost (llm.ts PRICE_PER_MTOK),
  * model time and wall-clock latency, rounds, and grounding rejects.
  *
+ * Guideline citations (#12): the retrieval hit rate against
+ * evals/guidelines/relevance.json, citation coverage (share of doctor-facing
+ * suggestions that cite a retrieved passage) and citation accuracy (share of
+ * cited suggestion–passage pairs where the passage supports the suggestion,
+ * decided by the judge; offline, by word overlap).
+ *
  * --phrasing template asks the template wording instead of the model rewrite
  * (#10: run both and compare before dropping the rewrite step).
  *
  * Flags: --mock  --patient <gateway id>  --judge <gateway id>  --runs <n>  --phrasing model|template
- *        --cases id1,id2  --out <dir>
+ *        --cases id1,id2  --out <dir>  --label <tag suffix>
  */
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -31,7 +37,10 @@ import { createGatewayChatModel, createGatewayLLM } from "../src/lib/agent/llm";
 import { createLLMPatient, createScriptedPatient, openingLine } from "../src/lib/agent/patient";
 import type { Turn } from "../src/lib/agent/schemas";
 import { createCheckpointer, createLLM, loadConfig } from "../backend/src/config";
+import { guidelineById } from "../backend/src/guidelines";
 import type { UsageSummary } from "../backend/src/llm";
+import type { NoteOutput } from "../backend/src/schemas";
+import { normalize } from "../shared/safety/grounding";
 import { createMockLLM } from "../backend/src/mock-llm";
 import { ConsultationService, type ConsultationView } from "../backend/src/service";
 import { writeEvalOutput } from "./lib/eval-output";
@@ -45,6 +54,7 @@ const { values: args } = parseArgs({
     phrasing: { type: "string", default: "model" },
     cases: { type: "string" },
     out: { type: "string", default: "docs/agent/eval" },
+    label: { type: "string" },
   },
 });
 
@@ -103,6 +113,68 @@ function mockJudge(transcript: Turn[], note: string): JudgeOutput {
   return { completeness: clauses.length ? Math.round((100 * covered) / clauses.length) : 100, accuracy: 100, unsupported: [], comments: "mock judge" };
 }
 
+// ---- guideline citations (#12) --------------------------------------------------
+
+const RELEVANT: Record<string, string[]> = JSON.parse(readFileSync("evals/guidelines/relevance.json", "utf8"));
+
+interface CitationResult {
+  retrieved: string[];
+  /** Retrieved passages that are labelled relevant to the case. */
+  relevantRetrieved: number;
+  relevantTotal: number;
+  suggestions: number;
+  /** Suggestions citing at least one retrieved passage. */
+  cited: number;
+  pairs: { suggestion: string; passage: string; supported: boolean }[];
+}
+
+const citationJudgeSchema = z.object({
+  verdicts: z.array(z.object({ index: z.number().int(), supported: z.boolean() })).describe("每一对一个判断，index 与输入编号对应"),
+});
+
+async function judgePairs(pairs: { suggestion: string; passage: string }[]): Promise<boolean[]> {
+  if (pairs.length === 0) return [];
+  if (MOCK) {
+    // Offline: supported when enough of the suggestion name's character bigrams appear in the passage.
+    // A rough harness check only; the real judge decides in a Bedrock run.
+    return pairs.map(({ suggestion, passage }) => {
+      const s = normalize(suggestion.replace(/[（：].*$/, ""));
+      const p = normalize(passage);
+      const grams = Array.from({ length: Math.max(0, s.length - 1) }, (_, i) => s.slice(i, i + 2));
+      return grams.length > 0 && grams.filter((g) => p.includes(g)).length / grams.length >= 0.4;
+    });
+  }
+  const chat = createGatewayChatModel(args.judge!, { maxTokens: 800 });
+  const runnable = chat.withStructuredOutput(citationJudgeSchema, { name: "citations", method: "functionCalling" });
+  const out = await runnable.invoke([
+    { role: "system", content: "你是临床指南审核医生。逐对判断：给出的指南片段是否直接支持这条给医生的建议（可能原因或建议检查）。只看片段本身，不要用片段以外的知识。" },
+    { role: "user", content: pairs.map((x, i) => `${i}. 建议：${x.suggestion}\n   指南片段：${x.passage}`).join("\n") },
+  ]);
+  return pairs.map((_, i) => out.verdicts.find((v) => v.index === i)?.supported ?? false);
+}
+
+async function citations(caseId: string, note: NoteOutput | null, retrieved: string[]): Promise<CitationResult> {
+  const relevant = RELEVANT[caseId] ?? [];
+  const items = note
+    ? [
+        ...note.forDoctor.possibleCauses.map((x) => ({ text: `${x.name}：${x.reasoning}`, sources: x.sources })),
+        ...note.forDoctor.suggestedTests.map((x) => ({ text: `${x.name}（${x.purpose}）`, sources: x.sources })),
+      ]
+    : [];
+  const pairs = items.flatMap((x) =>
+    x.sources.filter((id) => retrieved.includes(id)).map((id) => ({ suggestion: x.text, passage: guidelineById(id)?.text ?? "" })),
+  );
+  const verdicts = await judgePairs(pairs);
+  return {
+    retrieved,
+    relevantRetrieved: retrieved.filter((id) => relevant.includes(id)).length,
+    relevantTotal: relevant.length,
+    suggestions: items.length,
+    cited: items.filter((x) => x.sources.some((id) => retrieved.includes(id))).length,
+    pairs: pairs.map((x, i) => ({ ...x, supported: verdicts[i] })),
+  };
+}
+
 // ---- one consultation ------------------------------------------------------------
 
 interface Result {
@@ -118,6 +190,7 @@ interface Result {
   usage?: UsageSummary;
   wallMs: number;
   judge?: JudgeOutput;
+  citations?: CitationResult;
   transcript?: Turn[];
   output?: string;
 }
@@ -145,12 +218,14 @@ async function consult(service: ConsultationService, c: MedicalCase, run: number
       v = await service.answer(v.id, await patient(transcript, questions), "eval");
       countRejects(v);
     }
-    const transcript = (await service.state(v.id)).transcript as Turn[];
+    const state = await service.state(v.id);
+    const transcript = state.transcript as Turn[];
     const note = v.output ?? "";
     const judge = MOCK ? mockJudge(transcript, note) : await llmJudge(transcript, note);
+    const cites = await citations(c.id, state.note, state.guidelineIds);
     return {
       caseId: c.id, run, ok: true, status: v.status, rounds: v.rounds, level: v.level, record: v.record,
-      groundingRejects: rejects, usage: service.usageFor(v.id), wallMs: Date.now() - started, judge, transcript, output: note,
+      groundingRejects: rejects, usage: service.usageFor(v.id), wallMs: Date.now() - started, judge, citations: cites, transcript, output: note,
     };
   } catch (err) {
     return { caseId: c.id, run, ok: false, error: err instanceof Error ? err.message : String(err), wallMs: Date.now() - started };
@@ -180,6 +255,17 @@ function summarize(results: Result[]): string {
       `| ${c.id} ${c.title} | ${[...new Set(rs.map((r) => r.status))].join("/")} | ${[...new Set(rs.map((r) => r.level))].join("/")} | ${fmt(mean(rs.map((r) => r.judge!.completeness)))} | ${fmt(mean(rs.map((r) => r.judge!.accuracy)))} | ${fmt(mean(rs.map((r) => r.rounds!)))} | ${rs.map((r) => `${r.record!.answered}/${r.record!.unknown}/${r.record!.unasked}`).join(", ")} | ${fmt(mean(rs.map((r) => r.groundingRejects!)))} | ${fmt(mean(rs.map((r) => r.usage!.calls)))} |`,
     );
   }
+  const cs = ok.map((r) => r.citations!).filter((x) => x.suggestions > 0 || x.retrieved.length > 0);
+  const sum = (f: (x: CitationResult) => number) => cs.reduce((n, x) => n + f(x), 0);
+  const rate = (a: number, b: number) => (b ? `${fmt((100 * a) / b)}%` : "—");
+  lines.push(
+    "",
+    "指南引用（#12）：",
+    "",
+    "| 检索命中（至少一条相关） | 相关片段召回 | 建议条数 | 引用覆盖率 | 引用对数 | **引用准确率** |",
+    "|---|---|---|---|---|---|",
+    `| ${rate(cs.filter((x) => x.relevantRetrieved > 0).length, cs.length)} | ${rate(sum((x) => x.relevantRetrieved), sum((x) => x.relevantTotal))} | ${sum((x) => x.suggestions)} | ${rate(sum((x) => x.cited), sum((x) => x.suggestions))} | ${sum((x) => x.pairs.length)} | **${rate(sum((x) => x.pairs.filter((p) => p.supported).length), sum((x) => x.pairs.length))}** |`,
+  );
   const failed = results.filter((r) => !r.ok);
   if (failed.length) lines.push("", "失败：", "", ...failed.map((r) => `- ${r.caseId} run${r.run}: ${r.error}`));
   return lines.join("\n");
@@ -196,7 +282,7 @@ async function main() {
     }
   }
   const stamp = new Date().toISOString().slice(0, 10);
-  const tag = `${MOCK ? "mock" : "bedrock"}${args.phrasing === "template" ? "-template" : ""}-${stamp}`;
+  const tag = `${MOCK ? "mock" : "bedrock"}${args.phrasing === "template" ? "-template" : ""}${args.label ? `-${args.label}` : ""}-${stamp}`;
   const meta = {
     date: new Date().toISOString(),
     mode: MOCK ? "mock" : "bedrock",

@@ -70,6 +70,8 @@ function summarize(node: string, u: Partial<State>): string {
       return `第 ${u.asked?.[0]?.round} 轮追问：${u.asked?.[0]?.slotIds.join("、")}`;
     case "wait":
       return "收到患者回答";
+    case "retrieve":
+      return `检索诊疗指南：${u.guidelineIds?.length ?? 0} 条`;
     case "draft":
       return "生成病历草稿";
     case "check":

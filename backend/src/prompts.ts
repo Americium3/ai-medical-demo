@@ -1,3 +1,4 @@
+import { citeSource, type GuidelinePassage } from "./guidelines";
 import type { RecordTable } from "./record";
 import type { NoteOutput } from "./schemas";
 import { slotsFor, type Slot, type Template } from "./templates";
@@ -51,7 +52,17 @@ export function phrasePrompt(slots: Slot[], previous: string[]) {
   };
 }
 
-export function notePrompt(template: Template, record: RecordTable, issues: string[], previous: NoteOutput | null) {
+function guidelineText(passages: GuidelinePassage[]): string {
+  return passages.length ? passages.map((g) => `[${g.id}] ${citeSource(g.source)}：${g.text}`).join("\n") : "（没有检索到相关指南）";
+}
+
+export function notePrompt(
+  template: Template,
+  record: RecordTable,
+  issues: string[],
+  previous: NoteOutput | null,
+  passages: GuidelinePassage[],
+) {
   const revision = issues.length && previous
     ? `\n\n上一版病历草稿未通过检查，请逐条修正：\n${issues.map((i) => `- ${i}`).join("\n")}\n上一版：${JSON.stringify(previous)}`
     : "";
@@ -62,18 +73,20 @@ export function notePrompt(template: Template, record: RecordTable, issues: stri
 1. 每句话都要列出所依据的记录表要点编号（slotIds），只能引用状态为“已回答”的要点。
 2. 主诉写主要症状和持续时间，一句话。
 3. 不写体格检查、诊断结论和用药，这些由医生完成。
-4. 可能的原因只给医生参考，信息不足时要说明。`,
-    user: `记录表：\n${recordText(template, record)}${revision}`,
+4. 可能的原因只给医生参考，信息不足时要说明。
+5. 每条可能的原因和建议检查都必须在 sources 里写出依据的指南片段编号，只能用下面列出的编号。没有指南片段支持的建议不要写。`,
+    user: `记录表：\n${recordText(template, record)}\n\n检索到的指南片段：\n${guidelineText(passages)}${revision}`,
   };
 }
 
-export function reviewPrompt(template: Template, record: RecordTable, note: NoteOutput) {
+export function reviewPrompt(template: Template, record: RecordTable, note: NoteOutput, passages: GuidelinePassage[]) {
   return {
     system: `你是病历质控医生。检查下面的病历草稿：
 1. 主诉、现病史、既往史是否写入了记录表中没有的内容（forDoctor 里的可能原因和建议检查是给医生的推断，按要求必须有，不算此项问题）；
 2. 是否把可能性写成了定论；
-3. 是否遗漏了需要尽快就医的提示。
+3. 是否遗漏了需要尽快就医的提示；
+4. forDoctor 里每条建议引用的指南片段（sources）是否确实支持这条建议。
 全部没有问题时 pass=true、issues 为空。`,
-    user: `记录表：\n${recordText(template, record)}\n\n病历草稿：\n${JSON.stringify(note, null, 2)}`,
+    user: `记录表：\n${recordText(template, record)}\n\n指南片段：\n${guidelineText(passages)}\n\n病历草稿：\n${JSON.stringify(note, null, 2)}`,
   };
 }
