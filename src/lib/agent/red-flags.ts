@@ -1,3 +1,4 @@
+import { matchRules, matchTurns } from "../../../shared/safety/red-flags";
 import type { RiskLevel } from "./schemas";
 
 /**
@@ -20,27 +21,15 @@ export const RED_FLAG_RULES: { rule: string; level: RiskLevel; pattern: RegExp }
   { rule: "黑便/便血", level: "urgent", pattern: /黑便|便血/ },
 ];
 
-const NEGATION = /(没有|没|无|不|否认|未)[^，。,.!！?？]{0,3}$/;
-
 export function matchRedFlagRules(
   text: string,
 ): { rule: string; level: RiskLevel; quote: string }[] {
-  const hits: { rule: string; level: RiskLevel; quote: string }[] = [];
-  for (const r of RED_FLAG_RULES) {
-    const re = new RegExp(r.pattern.source, "g");
-    for (const m of text.matchAll(re)) {
-      const before = text.slice(Math.max(0, (m.index ?? 0) - 6), m.index);
-      if (NEGATION.test(before)) continue; // "没有呼吸困难"
-      hits.push({ rule: r.rule, level: r.level, quote: m[0] });
-      break;
-    }
-  }
-  return hits;
+  return matchRules(text, RED_FLAG_RULES);
 }
 
-/** Rule hits over everything the patient has said, one string per patient turn. */
+/** Rule hits over everything the patient has said, one string per patient turn, matched turn by turn. */
 export function matchPatientTurns(turns: string[]): { rule: string; level: RiskLevel; quote: string }[] {
-  return matchRedFlagRules(turns.join("\n"));
+  return matchTurns(turns, RED_FLAG_RULES);
 }
 
 const ORDER: Record<RiskLevel, number> = { routine: 0, urgent: 1, emergency: 2 };

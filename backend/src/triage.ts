@@ -6,6 +6,8 @@
  * only make the level more urgent than the model's, never less.
  */
 
+import { matchRules as matchSharedRules, matchTurns } from "../../shared/safety/red-flags";
+
 export type Level = 1 | 2 | 3 | 4;
 
 export const LEVEL_NAME: Record<Level, string> = { 1: "Ⅰ级 濒危", 2: "Ⅱ级 危重", 3: "Ⅲ级 急症", 4: "Ⅳ级 非急症" };
@@ -24,8 +26,6 @@ export const RULES: { rule: string; level: Level; pattern: RegExp }[] = [
   { rule: "黑便", level: 3, pattern: /黑便|大便发黑|便血/ },
 ];
 
-const NEGATION = /(没有|没|无|不|否认|未)[^，。,.!！?？]{0,3}$/;
-
 export interface RuleHit {
   rule: string;
   level: Level;
@@ -33,21 +33,12 @@ export interface RuleHit {
 }
 
 export function matchRules(text: string): RuleHit[] {
-  const hits: RuleHit[] = [];
-  for (const r of RULES) {
-    for (const m of text.matchAll(new RegExp(r.pattern.source, "g"))) {
-      const before = text.slice(Math.max(0, (m.index ?? 0) - 6), m.index);
-      if (NEGATION.test(before)) continue;
-      hits.push({ rule: r.rule, level: r.level, quote: m[0] });
-      break;
-    }
-  }
-  return hits;
+  return matchSharedRules(text, RULES);
 }
 
-/** Rule hits over everything the patient has said, one string per patient turn. */
+/** Rule hits over everything the patient has said, one string per patient turn, matched turn by turn. */
 export function matchPatientTurns(turns: string[]): RuleHit[] {
-  return matchRules(turns.join("\n"));
+  return matchTurns(turns, RULES);
 }
 
 export function mostUrgent(...levels: Level[]): Level {
