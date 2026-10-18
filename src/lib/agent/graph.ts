@@ -1,7 +1,7 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
 import type { AgentLLM } from "./llm";
-import { groundFacts, patientText } from "./grounding";
-import { matchRedFlagRules, maxLevel } from "./red-flags";
+import { groundFacts } from "./grounding";
+import { matchPatientTurns, maxLevel } from "./red-flags";
 import {
   askPrompt,
   differentialPrompt,
@@ -103,7 +103,7 @@ export function buildConsultationGraph(deps: GraphDeps) {
       ...redFlagPrompt(s.facts),
       context: { facts: s.facts, transcript: s.transcript },
     });
-    const ruleHits = matchRedFlagRules(patientText(s.transcript));
+    const ruleHits = matchPatientTurns(s.transcript.filter((t) => t.role === "patient").map((t) => t.content));
     const level = maxLevel(out.level, ...ruleHits.map((h) => h.level));
     const known = new Set(s.facts.map((f) => f.id));
     const redFlag: RedFlagResult = {

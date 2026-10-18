@@ -38,6 +38,11 @@ export function matchRedFlagRules(
   return hits;
 }
 
+/** Rule hits over everything the patient has said, one string per patient turn. */
+export function matchPatientTurns(turns: string[]): { rule: string; level: RiskLevel; quote: string }[] {
+  return matchRedFlagRules(turns.join("\n"));
+}
+
 const ORDER: Record<RiskLevel, number> = { routine: 0, urgent: 1, emergency: 2 };
 
 export function maxLevel(...levels: RiskLevel[]): RiskLevel {

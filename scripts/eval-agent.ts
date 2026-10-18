@@ -15,7 +15,6 @@
  * Flags: --mock  --model <id from src/data/models.ts>  --judge <gateway id>
  *        --runs <n>  --cases id1,id2  --concurrency <n>  --out <dir>
  */
-import { mkdirSync, writeFileSync } from "node:fs";
 import { parseArgs } from "node:util";
 import { generateText, type LanguageModel } from "ai";
 import { gateway } from "@ai-sdk/gateway";
@@ -30,6 +29,7 @@ import { createLLMPatient, createScriptedPatient, openingLine } from "../src/lib
 import { runToCompletion } from "../src/lib/agent/run";
 import { normalize } from "../src/lib/agent/grounding";
 import type { Turn } from "../src/lib/agent/schemas";
+import { writeEvalOutput } from "./lib/eval-output";
 
 const { values: args } = parseArgs({
   options: {
@@ -260,7 +260,6 @@ async function main() {
 
   const stamp = new Date().toISOString().slice(0, 10);
   const tag = MOCK ? `mock-${stamp}` : `${args.model}-${stamp}`;
-  mkdirSync(args.out!, { recursive: true });
   const meta = {
     date: new Date().toISOString(),
     mode: MOCK ? "mock" : "gateway",
@@ -269,10 +268,9 @@ async function main() {
     runs: RUNS,
     cases: cases.map((c) => c.id),
   };
-  writeFileSync(`${args.out}/results-${tag}.json`, JSON.stringify({ meta, results }, null, 2) + "\n");
   const summary = `# Eval ${tag}\n\n${MOCK ? "> ⚠️ 离线 mock 运行：模型、患者、裁判都是确定性替身，分数只验证评测流程能跑通，**不代表任何模型的真实水平**。\n\n" : ""}- 模型：${meta.model}\n- 裁判：${meta.judge}\n- 每个病例运行次数：${RUNS}\n\n${summarize(results)}\n`;
-  writeFileSync(`${args.out}/summary-${tag}.md`, summary);
-  console.log(`\n${summary}\nwrote ${args.out}/results-${tag}.json and summary-${tag}.md`);
+  const files = writeEvalOutput({ dir: args.out!, tag, meta, results, summary });
+  console.log(`\n${summary}\nwrote ${files.json} and ${files.md}`);
 }
 
 main();

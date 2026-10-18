@@ -20,7 +20,7 @@ import { extractPrompt, notePrompt, phrasePrompt, reviewPrompt, triagePrompt } f
 import { renderEmergency, renderNote } from "./render";
 import { extractSchema, noteSchema, phraseSchema, reviewSchema, triageSchema, type NoteOutput } from "./schemas";
 import { chooseTemplate, findSlot, slotsFor, TEMPLATES, type Slot, type Template } from "./templates";
-import { isEmergency, matchRules, mostUrgent, type Level, type RuleHit } from "./triage";
+import { isEmergency, matchPatientTurns, mostUrgent, type Level, type RuleHit } from "./triage";
 
 export const MAX_NOTE_REWRITES = 2;
 
@@ -90,8 +90,7 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, maxRound
       ...triagePrompt(template, s.record, latest),
       context: { text: latest },
     });
-    const allPatientText = s.transcript.filter((t) => t.role === "patient").map((t) => t.content).join("\n");
-    const ruleHits = matchRules(allPatientText);
+    const ruleHits = matchPatientTurns(s.transcript.filter((t) => t.role === "patient").map((t) => t.content));
     const level = mostUrgent(s.level, out.level as Level, ...ruleHits.map((h) => h.level));
     const escalated = level < (out.level as Level);
     return {

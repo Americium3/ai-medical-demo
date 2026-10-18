@@ -41,6 +41,48 @@ npx tsx scripts/eval-agent.ts --model claude-sonnet --runs 3 --judge openai/gpt-
 
 **离线 mock**（[`eval/summary-mock-2026-09-27.md`](eval/summary-mock-2026-09-27.md)）：三个条件、6 个病例全部跑通，JSON 和汇总表正常生成。mock 模型、mock 患者、mock 裁判都是关键词规则，**分数没有任何医学意义**，只说明评测流程本身是通的。
 
+## 危险信号评测（issue #8 / #4）
+
+测试集：[`evals/red-flags/cases.json`](../../evals/red-flags/cases.json)，72 条。
+
+- **38 条危险信号**，包括容易被否定词规则误杀的说法：不时呼吸困难、无缘无故晕倒、一直不停抽搐、止不住地吐血、是不是呼吸困难、没有发烧但呼吸困难，以及多轮里先答「没」、下一轮说「喘不上气」。
+- **19 条明确否认**：没有呼吸困难、否认胸痛大汗、不抽搐、无呕血、否认有明显的呼吸困难等。
+- **15 条普通主诉**，用来算误报率。
+
+两套 agent 的规则表不同（src 有「意识改变/晕厥」「不明原因体重下降」，backend 有一级「意识丧失或呼吸停止」），所以每条用例对两边分别写期望规则和等级。某一边没有对应规则的算**覆盖缺口**，单独列出，不计入召回（规则表合并是 #13）。
+
+```bash
+npx tsx scripts/eval-red-flags.ts --rules --label baseline   # 规则，确定性，离线
+npx tsx scripts/eval-red-flags.ts --model --mock             # backend 分级节点，离线 mock，只验证流程
+npx tsx scripts/eval-red-flags.ts --model                    # backend 分级节点，真实 Bedrock（模型 + 规则）
+```
+
+`--model` 模式下，backend 没有规则的用例按临床等级算期望（src 的 emergency → 2 级，urgent → 3 级），所以模型把晕倒判成 4 级算漏报。
+
+### 基线（修复前）
+
+规则（[`eval/redflags-summary-rules-baseline-2026-10-18.md`](eval/redflags-summary-rules-baseline-2026-10-18.md)）：
+
+| 实现 | 危险信号召回（规则覆盖的） | 明确否认误报 | 普通主诉误报 | 覆盖缺口 |
+|---|---|---|---|---|
+| src（Next） | **58.3%**（21/36） | 1/19 | 0/15 | 2 条 |
+| backend（Bedrock） | **64.5%**（20/31） | 1/19 | 0/15 | 7 条 |
+
+- 平铺直叙的危险信号全中（src 14/14，backend 15/15）。
+- 漏报集中在**不表示否定的「不/无/没」组合词**：不时、不停、不断、止不住、无缘无故、毫无征兆、无力、不知不觉、不舒服、受不了、没完没了、是不是。src 只中 1/14，backend 0/9。
+- 转折句「没有发烧但呼吸困难」两边都漏。
+- 多轮「没 / 喘不上气」两边都漏：各轮用换行拼起来后，换行不算分句，前一轮的「没」被当成了否定。
+- 误报：「否认有明显的呼吸困难」。否定词和症状之间隔了 4 个字，超出了 3 字窗口，就没认出是否认。
+
+| 模式 | 结果 |
+|---|---|
+| backend 分级，真实 Bedrock（模型 + 规则） | **待运行：需要密钥**（本次开发环境没有 `BEDROCK_ACCESS_KEY_ID` / `BEDROCK_SECRET_ACCESS_KEY`） |
+| backend 分级，离线 mock（[summary](eval/redflags-summary-model-mock-baseline-2026-10-18.md)） | 流程跑通，72/72。mock 模型恒定返回 4 级，数字只反映规则部分 |
+
+### 偏差控制
+
+后续的真实模型评测（`eval-agent.ts --runs 3`、`eval-backend.ts`）中，模拟患者和裁判各用一个与被测 agent **不同家族**的模型，避免同一家族的模型互相「对口径」，给自己打高分。
+
 ## CrewAI 对照（Phase 5）
 
 `experiments/crewai/crew_eval.py` 用 CrewAI 实现了同一个任务，裁判 prompt 与上面相同（从 `src/lib/prompts.ts` 导出）：

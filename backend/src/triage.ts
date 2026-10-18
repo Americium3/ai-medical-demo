@@ -45,6 +45,11 @@ export function matchRules(text: string): RuleHit[] {
   return hits;
 }
 
+/** Rule hits over everything the patient has said, one string per patient turn. */
+export function matchPatientTurns(turns: string[]): RuleHit[] {
+  return matchRules(turns.join("\n"));
+}
+
 export function mostUrgent(...levels: Level[]): Level {
   return Math.min(4, ...levels) as Level;
 }
