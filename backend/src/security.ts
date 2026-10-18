@@ -4,6 +4,7 @@
  * control, design doc §12.7). Full sign-in comes later.
  */
 import { createHash, timingSafeEqual } from "node:crypto";
+import { RATE_SCRIPT, type RedisLike } from "./redis";
 
 export function hashKey(key: string): string {
   return createHash("sha256").update(key).digest("hex");
@@ -28,8 +29,13 @@ export class ApiKeyAuth {
   }
 }
 
-/** Fixed-window counter per caller. In memory: fine for one instance; use Redis when scaling out. */
-export class RateLimiter {
+export interface RateLimiter {
+  /** Count one request for `caller`; false once it is over the limit for the current window. */
+  allow(caller: string): Promise<boolean>;
+}
+
+/** Fixed-window counter per caller. In memory: fine for one instance; use RedisRateLimiter when scaling out. */
+export class InMemoryRateLimiter implements RateLimiter {
   private windows = new Map<string, { start: number; count: number }>();
 
   constructor(
@@ -38,7 +44,7 @@ export class RateLimiter {
     private now: () => number = Date.now,
   ) {}
 
-  allow(caller: string): boolean {
+  async allow(caller: string): Promise<boolean> {
     const t = this.now();
     const w = this.windows.get(caller);
     if (!w || t - w.start >= this.windowMs) {
@@ -48,5 +54,22 @@ export class RateLimiter {
     if (w.count >= this.limit) return false;
     w.count++;
     return true;
+  }
+}
+
+/** Fixed-window counter per caller, shared by every instance through Redis. */
+export class RedisRateLimiter implements RateLimiter {
+  constructor(
+    private redis: RedisLike,
+    private name: string,
+    private limit: number,
+    private windowMs: number,
+    private now: () => number = Date.now,
+  ) {}
+
+  async allow(caller: string): Promise<boolean> {
+    const window = Math.floor(this.now() / this.windowMs);
+    const n = Number(await this.redis.eval(RATE_SCRIPT, 1, `rate:${this.name}:${caller}:${window}`, this.windowMs));
+    return n <= this.limit;
   }
 }

@@ -1,0 +1,27 @@
+# Local stand-in for the AWS deployment (#11): the backend image with Postgres and Redis.
+#   docker compose -f backend/docker-compose.yml up --build
+# Then open http://localhost:8787 and use the API key demo-key-123.
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    ports: ["8787:8787"]
+    environment:
+      API_KEYS: demo-key-123
+      AGENT_LLM: mock
+      DATABASE_URL: postgres://app:app@postgres:5432/consult
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    stop_grace_period: 30s
+  postgres:
+    image: postgres:17-alpine
+    environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: consult }
+    ports: ["5432:5432"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U app -d consult"], interval: 2s, retries: 30 }
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 2s, retries: 30 }

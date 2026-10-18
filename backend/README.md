@@ -9,7 +9,7 @@
 | 第三部分 危险分级（四级） | `src/triage.ts`：规则只能把等级调得更紧急，不能调低 |
 | 第七部分 问诊模板 | `src/templates.ts`：通用要点加胸痛、腹痛、头痛、咳嗽发热四类模板 |
 | 第七部分 问诊记录表、选题规则、停止条件 | `src/record.ts`、`src/planner.ts` |
-| 第八部分 会话记忆与防重复追问 | `src/graph.ts` 中的 `wait` 节点暂停问诊，状态按问诊编号保存在SQLite中；`src/planner.ts` 的三层去重 |
+| 第八部分 会话记忆与防重复追问 | `src/graph.ts` 中的 `wait` 节点暂停问诊，状态按问诊编号保存在SQLite（单机）或PostgreSQL（部署）中；`src/planner.ts` 的三层去重 |
 | 第九部分 接口与安全 | `src/server.ts`、`src/security.ts` |
 | 第十二部分 成本控制 | 追问轮数和自查次数有上限；`src/llm.ts` 按步骤选用快、慢两档模型；每个接口密钥有每日问诊上限 |
 
@@ -101,7 +101,7 @@ export BEDROCK_SECRET_ACCESS_KEY=<访问密钥>
 npm run backend:cli -- --case cardio-001
 ```
 
-密钥使用单独的变量名，避免误用运行环境中已有的其他AWS凭证。如需更换区域或模型，可设置 `BEDROCK_REGION`、`BEDROCK_FAST_MODEL_ID`、`BEDROCK_SMART_MODEL_ID`。
+密钥使用单独的变量名，避免误用运行环境中已有的其他AWS凭证。不设置这两个变量时，程序使用AWS SDK的默认凭证链：在ECS上就是任务的IAM角色，不需要任何访问密钥。如需更换区域或模型，可设置 `BEDROCK_REGION`、`BEDROCK_FAST_MODEL_ID`、`BEDROCK_SMART_MODEL_ID`。
 
 说明：Claude Opus 5.5、Sonnet 5.5等新模型不支持强制指定工具，也不接受自定义temperature。因此程序以“自动选择”方式提供工具，不发送temperature，并在程序中校验模型返回的结果。该写法已用本地模拟的Bedrock接口测试过，尚未连接真实的AWS账号测试。
 
@@ -195,6 +195,17 @@ LANGFUSE_PUBLIC_KEY=pk-lf-... LANGFUSE_SECRET_KEY=sk-lf-... LANGFUSE_BASE_URL=ht
 
 依赖版本：`@langfuse/langchain`、`@langfuse/otel`、`@langfuse/tracing`、`@langfuse/core` 固定在 5.11.1，OpenTelemetry 固定在 2.11.0。6.0.0 刚发布几天，暂不升级。
 
+## 五（附二）、部署（#11）
+
+单机运行用SQLite和内存里的锁、限流。部署多个实例时：
+
+- 设置 `DATABASE_URL`（或 `PGHOST` 等 `PG*` 变量），问诊状态改存 PostgreSQL（LangGraph 的 `PostgresSaver`，第一次启动时自动建表）。实例本身不保存状态，可以横向扩展。
+- 设置 `REDIS_URL`，问诊锁和限流计数改存 Redis，所有实例共用。
+- `GET /readyz` 检查数据库和 Redis 是否可用，供负载均衡做健康检查；`/healthz` 只表示进程还活着。
+- 收到 SIGTERM 时，`/readyz` 先变成 503，新连接不再接收，进行中的请求处理完再退出（最多 `SHUTDOWN_TIMEOUT_MS`）。
+
+镜像：`docker build -f backend/Dockerfile -t consult-backend .`（在仓库根目录执行）。本地用 `docker compose -f backend/docker-compose.yml up --build` 连同 Postgres 和 Redis 一起启动。部署到 AWS（ECS Fargate + RDS + ElastiCache，私有子网经 VPC 终端节点访问 Bedrock，密钥放在 Secrets Manager）的模板和步骤见 `deploy/aws/README.md`。实际部署会产生费用，待运行：需要 AWS 账号并确认费用。
+
 ## 六、安全设置
 
 1. 除健康检查外，所有接口都要求 `Authorization: Bearer <接口密钥>`。密钥通过 `API_KEYS` 环境变量配置，可以配置多个，用英文逗号分隔。程序只保存密钥的哈希值，并用恒定时间比较，避免时序攻击。
@@ -208,12 +219,16 @@ LANGFUSE_PUBLIC_KEY=pk-lf-... LANGFUSE_SECRET_KEY=sk-lf-... LANGFUSE_BASE_URL=ht
 | 环境变量 | 说明 | 默认值 |
 |---|---|---|
 | `AGENT_LLM` | `mock` 或 `bedrock` | `mock` |
-| `BEDROCK_ACCESS_KEY_ID` / `BEDROCK_SECRET_ACCESS_KEY` | Bedrock账号的访问密钥 | 无，接入Bedrock时必填 |
+| `BEDROCK_ACCESS_KEY_ID` / `BEDROCK_SECRET_ACCESS_KEY` | Bedrock账号的访问密钥 | 无，不设置时用AWS默认凭证链（IAM角色） |
 | `BEDROCK_REGION` | Bedrock所在区域 | `us-east-2` |
 | `BEDROCK_FAST_MODEL_ID` | 快档模型ID | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
 | `BEDROCK_SMART_MODEL_ID` | 慢档模型ID | `us.anthropic.claude-sonnet-4-6` |
 | `AGENT_PHRASING` | `model`：追问措辞由快档模型改写（与分级并行）；`template`：直接用模板问法 | `model` |
-| `DB_PATH` | 问诊状态的保存位置 | `backend/data/consultations.sqlite` |
+| `DB_PATH` | 问诊状态的保存位置（SQLite） | `backend/data/consultations.sqlite` |
+| `DATABASE_URL` 或 `PGHOST`/`PGUSER`/`PGPASSWORD`/`PGDATABASE`/`PGSSLMODE` | 设置后问诊状态存 PostgreSQL，`DB_PATH` 不再使用 | 无（用 SQLite） |
+| `REDIS_URL` | 设置后问诊锁和限流存 Redis（`rediss://` 表示 TLS） | 无（存内存） |
+| `LOCK_TTL_MS` | 持锁的实例意外退出时，锁多久后自动失效 | `300000` |
+| `SHUTDOWN_TIMEOUT_MS` | 优雅停机时等待进行中请求的最长时间 | `25000` |
 | `API_KEYS` | 接口密钥，逗号分隔 | 无，启动HTTP服务时必填 |
 | `PORT` | HTTP端口 | `8787` |
 | `RATE_LIMIT_PER_MINUTE` | 每个密钥每分钟请求上限 | `30` |
@@ -227,12 +242,13 @@ LANGFUSE_PUBLIC_KEY=pk-lf-... LANGFUSE_SECRET_KEY=sk-lf-... LANGFUSE_BASE_URL=ht
 npm run backend:test
 ```
 
+PostgreSQL 和 Redis 的集成测试不在上面的测试里，需要两个服务都启动后单独运行：`DATABASE_URL=... REDIS_URL=... npm run test:integration`（见 `deploy/aws/README.md`）。
+
 测试全部离线运行，覆盖以下内容：规划器的选题顺序、去重和轮数上限；记录表只接受能对上患者原话的内容；危险分级规则与否定词；完整问诊不重复提问；危险情况立即结束；重启进程后可接着上次的进度继续；自查不通过时重写；接口的密钥校验、访问隔离、输入检查、限流和每日上限；Bedrock请求的格式，用本地模拟的Bedrock接口验证；模型调用失败后显示为失败、返回502、可以重试（`backend/tests/failed-state.test.ts`）；以及开启追踪时每个节点都有 span、归到问诊编号对应的 session、手机号被隐藏（`backend/tests/tracing.test.ts`，用内存导出器代替 Langfuse 服务）。
 
 ## 九、已知限制
 
 1. 尚未连接真实的AWS Bedrock测试。
 2. 离线替身模型的判断很粗糙，只用于演示流程。
-3. 演示使用SQLite保存状态，正式部署时改为PostgreSQL，LangGraph提供同样接口的PostgresSaver。
-4. 限流计数和问诊锁默认保存在内存中，部署多个实例时需要改用Redis。
-5. 规划器的停止条件做了简化：必填项和鉴别要点都有结果、或达到轮数上限即停止，暂未判断“可能诊断是否连续两轮不变”。
+3. 不设置 `DATABASE_URL` 和 `REDIS_URL` 时，状态存在SQLite里，限流计数和问诊锁存在内存里，只适合单个实例。
+4. 规划器的停止条件做了简化：必填项和鉴别要点都有结果、或达到轮数上限即停止，暂未判断“可能诊断是否连续两轮不变”。

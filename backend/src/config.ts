@@ -1,5 +1,9 @@
 import path from "node:path";
+import { mkdirSync } from "node:fs";
+import type { BaseCheckpointSaver } from "@langchain/langgraph";
+import { PostgresSaver } from "@langchain/langgraph-checkpoint-postgres";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
+import pg from "pg";
 import { createBedrockLLM, type LLM } from "./llm";
 import { createMockLLM } from "./mock-llm";
 import { createTracing, tracingOptionsFromEnv, type Tracing, type TracingOptions } from "../../shared/tracing/langfuse";
@@ -9,8 +13,21 @@ export interface Config {
   region: string;
   fastModelId: string;
   smartModelId: string;
+  /** Explicit Bedrock keys; when absent the AWS default credential chain is used (on ECS, the task's IAM role). */
   credentials?: { accessKeyId: string; secretAccessKey: string };
+  /** SQLite file for a single machine; ignored when `postgres` is set. */
   dbPath: string;
+  /**
+   * Postgres checkpointer, so instances keep no state of their own. Set by
+   * DATABASE_URL, or by PGHOST with the other PG* variables (node-postgres reads them).
+   */
+  postgres: { connectionString: string | undefined } | null;
+  /** Redis for the per-consultation lock and shared rate limits; null keeps both in memory. */
+  redisUrl: string | null;
+  /** How long a consultation lock lives in Redis if its holder dies. */
+  lockTtlMs: number;
+  /** How long graceful shutdown waits for in-flight requests. */
+  shutdownTimeoutMs: number;
   port: number;
   apiKeys: string[];
   ratePerMinute: number;
@@ -23,7 +40,7 @@ export interface Config {
 
 export class ConfigError extends Error {}
 
-export function loadConfig(env = process.env): Config {
+export function loadConfig(env: Record<string, string | undefined> = process.env): Config {
   const llm = (env.AGENT_LLM ?? "mock") as Config["llm"];
   if (llm !== "mock" && llm !== "bedrock") throw new ConfigError(`AGENT_LLM must be "mock" or "bedrock", got "${llm}"`);
   const cfg: Config = {
@@ -37,6 +54,10 @@ export function loadConfig(env = process.env): Config {
         ? { accessKeyId: env.BEDROCK_ACCESS_KEY_ID, secretAccessKey: env.BEDROCK_SECRET_ACCESS_KEY }
         : undefined,
     dbPath: env.DB_PATH ?? path.join("backend", "data", "consultations.sqlite"),
+    postgres: env.DATABASE_URL || env.PGHOST ? { connectionString: env.DATABASE_URL || undefined } : null,
+    redisUrl: env.REDIS_URL || null,
+    lockTtlMs: Number(env.LOCK_TTL_MS ?? 5 * 60_000),
+    shutdownTimeoutMs: Number(env.SHUTDOWN_TIMEOUT_MS ?? 25_000),
     port: Number(env.PORT ?? 8787),
     apiKeys: (env.API_KEYS ?? "").split(",").map((k) => k.trim()).filter(Boolean),
     ratePerMinute: Number(env.RATE_LIMIT_PER_MINUTE ?? 30),
@@ -44,11 +65,6 @@ export function loadConfig(env = process.env): Config {
     phrasing: env.AGENT_PHRASING === "template" ? "template" : "model",
     tracing: tracingOptionsFromEnv(env),
   };
-  if (llm === "bedrock" && !cfg.credentials) {
-    throw new ConfigError(
-      "AGENT_LLM=bedrock needs BEDROCK_ACCESS_KEY_ID and BEDROCK_SECRET_ACCESS_KEY (the company Bedrock account's keys).",
-    );
-  }
   return cfg;
 }
 
@@ -75,4 +91,30 @@ export function createTracer(cfg: Config): Tracing | undefined {
 
 export function createCheckpointer(dbPath: string): SqliteSaver {
   return SqliteSaver.fromConnString(dbPath);
+}
+
+export interface Store {
+  checkpointer: BaseCheckpointSaver;
+  /** Throws if the database is unreachable. */
+  ping(): Promise<void>;
+  close(): Promise<void>;
+  describe: string;
+}
+
+/** Postgres when configured (creating its tables on first use), otherwise the SQLite file. */
+export async function openStore(cfg: Config): Promise<Store> {
+  if (cfg.postgres) {
+    const pool = new pg.Pool({ connectionString: cfg.postgres.connectionString, max: 10 });
+    const checkpointer = new PostgresSaver(pool);
+    await checkpointer.setup();
+    return {
+      checkpointer,
+      ping: async () => void (await pool.query("select 1")),
+      close: () => pool.end(),
+      describe: "postgres",
+    };
+  }
+  mkdirSync(path.dirname(cfg.dbPath), { recursive: true });
+  const checkpointer = createCheckpointer(cfg.dbPath);
+  return { checkpointer, ping: async () => {}, close: async () => {}, describe: `sqlite ${cfg.dbPath}` };
 }
