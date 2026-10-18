@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { Command, type BaseCheckpointSaver } from "@langchain/langgraph";
 import { buildGraph, type GraphOptions, type State } from "./graph";
 import type { Tracing } from "../../shared/tracing/langfuse";
+import { InMemoryLock, type ConsultationLock } from "./lock";
 import { consultationScope, LLMError, summarizeUsage, type LLM, type UsageRecord, type UsageSummary } from "./llm";
 import { countByStatus, type SlotStatus } from "./record";
 import { slotsFor, templateById, type SlotKind } from "./templates";
@@ -95,10 +96,13 @@ function failureOf(snap: { tasks: readonly { error?: unknown }[] }): string | nu
 
 export interface ServiceOptions {
   phrasing?: GraphOptions["phrasing"];
+  /** Serializes runs of one consultation; defaults to a per-process lock. */
+  lock?: ConsultationLock;
 }
 
 export class ConsultationService {
   private graph;
+  private lock: ConsultationLock;
 
   constructor(
     private llm: LLM,
@@ -108,6 +112,18 @@ export class ConsultationService {
     opts: ServiceOptions = {},
   ) {
     this.graph = buildGraph(llm, checkpointer, { maxRounds, phrasing: opts.phrasing });
+    this.lock = opts.lock ?? new InMemoryLock();
+  }
+
+  /** Run `fn` holding the consultation's lock; a concurrent caller gets ConflictError (409). */
+  private async exclusive<T>(id: string, fn: () => Promise<T>): Promise<T> {
+    const release = await this.lock.tryAcquire(id);
+    if (!release) throw new ConflictError("another request for this consultation is in progress; retry when it finishes");
+    try {
+      return await fn();
+    } finally {
+      await release();
+    }
   }
 
   get modelKind(): string {
@@ -157,6 +173,13 @@ export class ConsultationService {
     return snap;
   }
 
+  /** The snapshot, if `owner` created the consultation; NotFoundError otherwise. */
+  private async owned(id: string, owner: string) {
+    const snap = await this.snapshot(id);
+    if ((snap.values as State).owner !== owner) throw new NotFoundError(id);
+    return snap;
+  }
+
   private async view(id: string, trace: TraceStep[]): Promise<ConsultationView> {
     const snap = await this.snapshot(id);
     const s = snap.values as State;
@@ -188,27 +211,31 @@ export class ConsultationService {
   }
 
   async answer(id: string, text: string, owner: string): Promise<ConsultationView> {
-    const snap = await this.snapshot(id);
-    if ((snap.values as State).owner !== owner) throw new NotFoundError(id);
-    if (failureOf(snap)) throw new ConflictError("consultation failed; POST /v1/consultations/:id/retry to resume it");
-    if (!snap.tasks.some((t) => t.interrupts.length > 0)) throw new ConflictError("consultation is not waiting for an answer");
-    const trace = await this.run(id, new Command({ resume: text }));
-    return this.view(id, trace);
+    await this.owned(id, owner); // another key gets 404 before it can learn the lock is held
+    // The state checks run under the lock, so a second answer sees the first one's result.
+    return this.exclusive(id, async () => {
+      const snap = await this.owned(id, owner);
+      if (failureOf(snap)) throw new ConflictError("consultation failed; POST /v1/consultations/:id/retry to resume it");
+      if (!snap.tasks.some((t) => t.interrupts.length > 0)) throw new ConflictError("consultation is not waiting for an answer");
+      const trace = await this.run(id, new Command({ resume: text }));
+      return this.view(id, trace);
+    });
   }
 
   /** Resume a failed consultation from the step that failed, on the same thread. */
   async retry(id: string, owner: string): Promise<ConsultationView> {
-    const snap = await this.snapshot(id);
-    if ((snap.values as State).owner !== owner) throw new NotFoundError(id);
-    if (!failureOf(snap)) throw new ConflictError("consultation has not failed; nothing to retry");
-    // A null input makes LangGraph re-run the errored task from the last checkpoint.
-    const trace = await this.run(id, null);
-    return this.view(id, trace);
+    await this.owned(id, owner);
+    return this.exclusive(id, async () => {
+      const snap = await this.owned(id, owner);
+      if (!failureOf(snap)) throw new ConflictError("consultation has not failed; nothing to retry");
+      // A null input makes LangGraph re-run the errored task from the last checkpoint.
+      const trace = await this.run(id, null);
+      return this.view(id, trace);
+    });
   }
 
   async get(id: string, owner: string): Promise<ConsultationView> {
-    const snap = await this.snapshot(id);
-    if ((snap.values as State).owner !== owner) throw new NotFoundError(id);
+    await this.owned(id, owner);
     return this.view(id, []);
   }
 

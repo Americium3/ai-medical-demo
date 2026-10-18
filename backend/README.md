@@ -141,6 +141,7 @@ curl -X POST localhost:8787/v1/consultations/<问诊编号>/retry -H 'authorizat
 ```
 
 - 失败状态下调用 `/answers` 会返回 409，提示改用 `/retry`；没有失败时调用 `/retry` 也返回 409。
+- 同一个问诊同时只处理一个 `/answers` 或 `/retry` 请求：前一个还没处理完时，后到的请求返回 409，图不会被执行两次。
 - 其他程序内部错误仍然返回 500。
 
 演示页面会显示错误信息和「Retry」按钮。命令行里输入 `/retry` 重试。
@@ -233,5 +234,5 @@ npm run backend:test
 1. 尚未连接真实的AWS Bedrock测试。
 2. 离线替身模型的判断很粗糙，只用于演示流程。
 3. 演示使用SQLite保存状态，正式部署时改为PostgreSQL，LangGraph提供同样接口的PostgresSaver。
-4. 限流计数保存在内存中，部署多个实例时需要改用Redis。
+4. 限流计数和问诊锁默认保存在内存中，部署多个实例时需要改用Redis。
 5. 规划器的停止条件做了简化：必填项和鉴别要点都有结果、或达到轮数上限即停止，暂未判断“可能诊断是否连续两轮不变”。
