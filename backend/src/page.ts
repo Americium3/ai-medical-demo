@@ -152,6 +152,7 @@ function show(v) {
   } else if (trace) {
     add("<details open><summary>What the graph did</summary>" + trace + "</details>");
   }
+  if (v.status === "failed") showFailure(v.error || "The model call failed.");
   if (v.output) {
     add('<div class="who">' + (v.status === "emergency" ? "Shown to the patient" : "Draft note for the doctor") + "</div><pre>" + esc(v.output) + "</pre>", "note" + (v.status === "emergency" ? " emergency" : ""));
     text.disabled = true; document.getElementById("send").disabled = true;
@@ -170,7 +171,28 @@ function show(v) {
 
 function api(method, path, body) {
   return fetch(path, { method: method, headers: { "authorization": "Bearer " + key, "content-type": "application/json" }, body: body ? JSON.stringify(body) : undefined })
-    .then(function (res) { return res.json().then(function (data) { if (!res.ok) throw new Error(res.status === 401 ? "The API key is missing or wrong. Restart with npm run demo, or paste the key printed in the terminal." : (data.error || "Request failed")); return data; }); });
+    .then(function (res) { return res.json().then(function (data) { if (!res.ok) { var err = new Error(res.status === 401 ? "The API key is missing or wrong. Restart with npm run demo, or paste the key printed in the terminal." : (data.error || "Request failed")); err.data = data; throw err; } return data; }); });
+}
+
+// A failed model call leaves the consultation saved as "failed"; Retry resumes it from the failed step.
+function showFailure(message) {
+  text.disabled = true; document.getElementById("send").disabled = true;
+  var d = add('<p class="err"></p><button type="button">Retry</button>');
+  d.querySelector("p").textContent = message;
+  d.querySelector("button").addEventListener("click", function () {
+    if (busy) return;
+    busy = true; d.remove();
+    var wait = add('<p class="hint">Retrying…</p>');
+    api("POST", "/v1/consultations/" + id + "/retry")
+      .then(function (v) { wait.remove(); text.disabled = false; document.getElementById("send").disabled = false; show(v); })
+      .catch(function (err) { wait.remove(); fail(err); })
+      .then(function () { busy = false; });
+  });
+}
+
+function fail(err) {
+  if (err.data && err.data.retryable) { id = err.data.id; showFailure(err.message); return; }
+  add('<p class="err"></p>').querySelector("p").textContent = err.message;
 }
 
 document.getElementById("form").addEventListener("submit", function (e) {
@@ -184,7 +206,7 @@ document.getElementById("form").addEventListener("submit", function (e) {
   var wait = add('<p class="hint">Working… the model can take 10 to 30 seconds per round.</p>');
   (id ? api("POST", "/v1/consultations/" + id + "/answers", { text: msg }) : api("POST", "/v1/consultations", { complaint: msg }))
     .then(function (v) { id = v.id; wait.remove(); show(v); })
-    .catch(function (err) { wait.className = "err"; wait.textContent = err.message; })
+    .catch(function (err) { wait.remove(); fail(err); })
     .then(function () { busy = false; if (!text.disabled) { document.getElementById("send").disabled = false; text.focus(); } });
 });
 text.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); document.getElementById("form").requestSubmit(); } });

@@ -6,7 +6,8 @@
  *   npm run backend:cli -- --resume <id>         # continue a saved consultation
  *   npm run backend:cli -- --server http://localhost:8787 --key <API key>   # talk to the HTTP API
  *
- * In-session commands: /record shows the record table, /quit exits (progress is saved).
+ * In-session commands: /record shows the record table, /retry resumes after a
+ * failed model call, /quit exits (progress is saved).
  */
 import { mkdirSync } from "node:fs";
 import path from "node:path";
@@ -14,7 +15,7 @@ import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { MEDICAL_CASES } from "../../src/data/cases";
 import { createCheckpointer, createLLM, loadConfig } from "./config";
-import { ConsultationService, type ConsultationView } from "./service";
+import { ConsultationService, ModelFailureError, type ConsultationView } from "./service";
 import { slotsFor, TEMPLATES } from "./templates";
 
 const { values: args } = parseArgs({
@@ -31,6 +32,7 @@ interface Backend {
   start(complaint: string): Promise<ConsultationView>;
   answer(id: string, text: string): Promise<ConsultationView>;
   get(id: string): Promise<ConsultationView>;
+  retry(id: string): Promise<ConsultationView>;
   record?(id: string): Promise<string>;
 }
 
@@ -45,6 +47,7 @@ function local(): Backend {
     start: (c) => service.start(c, OWNER),
     answer: (id, t) => service.answer(id, t, OWNER),
     get: (id) => service.get(id, OWNER),
+    retry: (id) => service.retry(id, OWNER),
     async record(id) {
       const s = await service.state(id);
       const t = TEMPLATES.find((x) => x.id === s.templateId);
@@ -60,6 +63,26 @@ function local(): Backend {
   };
 }
 
+class RetryableFailure extends Error {
+  constructor(
+    readonly id: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+/** Run a step; on a model failure, return the saved (failed) consultation instead of throwing. */
+async function orFailed(backend: Backend, step: Promise<ConsultationView>): Promise<ConsultationView> {
+  try {
+    return await step;
+  } catch (err) {
+    const id = err instanceof ModelFailureError || err instanceof RetryableFailure ? err.id : null;
+    if (!id) throw err;
+    return backend.get(id);
+  }
+}
+
 function remote(base: string, key: string): Backend {
   const call = async (method: string, url: string, body?: unknown) => {
     const res = await fetch(`${base}${url}`, {
@@ -68,6 +91,7 @@ function remote(base: string, key: string): Backend {
       body: body ? JSON.stringify(body) : undefined,
     });
     const data = await res.json();
+    if (res.status === 502 && data.retryable) throw new RetryableFailure(data.id, data.error);
     if (!res.ok) throw new Error(`${res.status} ${data.error}`);
     return data as ConsultationView;
   };
@@ -76,6 +100,7 @@ function remote(base: string, key: string): Backend {
     start: (complaint) => call("POST", "/v1/consultations", { complaint }),
     answer: (id, text) => call("POST", `/v1/consultations/${id}/answers`, { text }),
     get: (id) => call("GET", `/v1/consultations/${id}`),
+    retry: (id) => call("POST", `/v1/consultations/${id}/retry`),
   };
 }
 
@@ -111,6 +136,7 @@ function show(v: ConsultationView) {
   if (args.trace) for (const t of v.trace) console.log(`  · ${t.node}：${t.summary}`);
   if (v.question) console.log(`\n问诊助手：${v.question}`);
   if (v.output) console.log(`\n${v.output}\n`);
+  if (v.status === "failed") console.log(`\n模型调用失败：${v.error}\n进度已保存。输入 /retry 重试，或 /quit 退出。`);
 }
 
 async function main() {
@@ -126,13 +152,16 @@ async function main() {
   } else {
     const complaint = patient ? patient.opening : await ask("患者：请说说哪里不舒服？\n> ");
     if (patient) console.log(`患者：${complaint}`);
-    view = await backend.start(complaint);
+    view = await orFailed(backend, backend.start(complaint));
     console.log(`问诊编号：${view.id}`);
   }
   show(view);
 
-  while (view.status === "awaiting_answer") {
-    const answer = patient ? patient.reply(view.question ?? "") : await ask("> ");
+  let autoRetries = 0;
+  while (view.status === "awaiting_answer" || view.status === "failed") {
+    // A scripted patient retries a failed step by itself, but not forever.
+    if (view.status === "failed" && patient && autoRetries++ >= 2) break;
+    const answer = view.status === "failed" ? (patient ? "/retry" : await ask("> ")) : patient ? patient.reply(view.question ?? "") : await ask("> ");
     if (patient) console.log(`患者：${answer}`);
     if (answer === "/quit") {
       console.log(`进度已保存。继续：npm run backend:cli -- --resume ${view.id}`);
@@ -142,8 +171,16 @@ async function main() {
       console.log(backend.record ? await backend.record(view.id) : "（远程模式下不支持）");
       continue;
     }
-    if (!answer) continue;
-    view = await backend.answer(view.id, answer);
+    if (answer === "/retry") {
+      if (view.status !== "failed") console.log("（当前没有失败的步骤）");
+      else {
+        view = await orFailed(backend, backend.retry(view.id));
+        show(view);
+      }
+      continue;
+    }
+    if (!answer || view.status === "failed") continue;
+    view = await orFailed(backend, backend.answer(view.id, answer));
     show(view);
   }
   rl.close();

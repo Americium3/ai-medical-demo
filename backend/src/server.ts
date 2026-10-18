@@ -3,9 +3,14 @@
  *
  *   POST /v1/consultations                 { "complaint": "..." }  → start
  *   POST /v1/consultations/:id/answers     { "text": "..." }       → answer the pending question
+ *   POST /v1/consultations/:id/retry                                → resume a failed consultation
  *   GET  /v1/consultations/:id                                      → current state
  *   GET  /healthz                                                    → liveness (no auth)
  *   GET  /                                                           → demo chat page (no auth; its API calls need a key)
+ *
+ * A model failure (Bedrock still failing after its retries) answers
+ * 502 { error, retryable: true, id }: the consultation is saved as "failed"
+ * and POST …/retry resumes it from the failed step.
  *
  * Every /v1 call needs `Authorization: Bearer <API key>`. A consultation is
  * visible only to the key that created it. Patient text is never logged.
@@ -13,7 +18,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { z } from "zod";
 import { DEMO_PAGE } from "./page";
-import { ConflictError, NotFoundError, type ConsultationService } from "./service";
+import { ConflictError, ModelFailureError, NotFoundError, type ConsultationService } from "./service";
 import { ApiKeyAuth, RateLimiter } from "./security";
 
 const MAX_BODY_BYTES = 8 * 1024;
@@ -92,9 +97,10 @@ export function createApiServer(opts: ServerOptions): Server {
       if (!caller) throw new HttpError(401, "Missing or invalid API key");
       if (!limiter.allow(caller)) throw new HttpError(429, "Too many requests, slow down");
 
-      const m = /^\/v1\/consultations(?:\/([0-9a-f-]{36})(\/answers)?)?$/.exec(url.pathname);
+      const m = /^\/v1\/consultations(?:\/([0-9a-f-]{36})(?:\/(answers|retry))?)?$/.exec(url.pathname);
       if (!m) throw new HttpError(404, "Not found");
-      const [, id, answers] = m;
+      const [, id, action] = m;
+      const answers = action === "answers";
 
       if (req.method === "POST" && !id) {
         const { complaint } = parse(startSchema, await readJson(req));
@@ -109,13 +115,27 @@ export function createApiServer(opts: ServerOptions): Server {
         status = 200;
         return send(res, 200, answered);
       }
-      if (req.method === "GET" && id && !answers) {
+      if (req.method === "POST" && id && action === "retry") {
+        const retried = await opts.service.retry(id, caller);
+        status = 200;
+        return send(res, 200, retried);
+      }
+      if (req.method === "GET" && id && !action) {
         const found = await opts.service.get(id, caller);
         status = 200;
         return send(res, 200, found);
       }
       throw new HttpError(405, "Method not allowed");
     } catch (err) {
+      if (err instanceof ModelFailureError) {
+        status = 502;
+        log(`model failure ${err.cause.task}`);
+        return send(res, 502, {
+          error: `Model call failed at step "${err.cause.task}". The consultation is saved; POST /v1/consultations/${err.id}/retry to resume.`,
+          retryable: true,
+          id: err.id,
+        });
+      }
       if (err instanceof HttpError) status = err.status;
       else if (err instanceof NotFoundError) status = 404;
       else if (err instanceof ConflictError) status = 409;

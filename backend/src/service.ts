@@ -5,7 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { Command, type BaseCheckpointSaver } from "@langchain/langgraph";
 import { buildGraph, type State } from "./graph";
-import type { LLM, UsageRecord } from "./llm";
+import { LLMError, type LLM, type UsageRecord } from "./llm";
 import { countByStatus, type SlotStatus } from "./record";
 import { slotsFor, templateById, type SlotKind } from "./templates";
 import { LEVEL_NAME } from "./triage";
@@ -24,7 +24,8 @@ export interface RecordRow {
 
 export interface ConsultationView {
   id: string;
-  status: "awaiting_answer" | "emergency" | "completed";
+  /** "failed": a model call failed after its retries; POST …/retry resumes from the failed step. */
+  status: "awaiting_answer" | "emergency" | "completed" | "failed";
   question: string | null;
   level: string;
   record: { answered: number; unknown: number; unasked: number };
@@ -32,11 +33,23 @@ export interface ConsultationView {
   table: RecordRow[];
   rounds: number;
   output: string | null;
+  /** Why the consultation failed, when status is "failed". */
+  error: string | null;
   trace: TraceStep[];
 }
 
 export class NotFoundError extends Error {}
 export class ConflictError extends Error {}
+
+/** A model call failed after its retries. The consultation is saved as "failed" and can be retried. */
+export class ModelFailureError extends Error {
+  constructor(
+    readonly id: string,
+    readonly cause: LLMError,
+  ) {
+    super(cause.message);
+  }
+}
 
 function summarize(node: string, u: Partial<State>): string {
   switch (node) {
@@ -65,6 +78,14 @@ function summarize(node: string, u: Partial<State>): string {
   }
 }
 
+/** The error saved on a failed task, if the last run ended in one. */
+function failureOf(snap: { tasks: readonly { error?: unknown }[] }): string | null {
+  const t = snap.tasks.find((x) => x.error);
+  if (!t) return null;
+  const e = t.error as { message?: unknown };
+  return typeof e?.message === "string" ? e.message : String(t.error);
+}
+
 export class ConsultationService {
   private graph;
 
@@ -90,12 +111,18 @@ export class ConsultationService {
 
   private async run(id: string, input: unknown): Promise<TraceStep[]> {
     const trace: TraceStep[] = [];
-    const stream = await this.graph.stream(input as never, { ...this.config(id), streamMode: "updates" });
-    for await (const chunk of stream) {
-      for (const [node, update] of Object.entries(chunk as Record<string, unknown>)) {
-        if (node === "__interrupt__") continue;
-        trace.push({ node, summary: summarize(node, (update ?? {}) as Partial<State>) });
+    try {
+      const stream = await this.graph.stream(input as never, { ...this.config(id), streamMode: "updates" });
+      for await (const chunk of stream) {
+        for (const [node, update] of Object.entries(chunk as Record<string, unknown>)) {
+          if (node === "__interrupt__") continue;
+          trace.push({ node, summary: summarize(node, (update ?? {}) as Partial<State>) });
+        }
       }
+    } catch (err) {
+      // The checkpointer has saved the error on the failed task; view() reports it and retry() resumes it.
+      if (err instanceof LLMError) throw new ModelFailureError(id, err);
+      throw err;
     }
     return trace;
   }
@@ -110,9 +137,10 @@ export class ConsultationService {
     const snap = await this.snapshot(id);
     const s = snap.values as State;
     const waiting = snap.tasks.some((t) => t.interrupts.length > 0);
+    const failure = failureOf(snap);
     return {
       id,
-      status: waiting ? "awaiting_answer" : s.status === "emergency" ? "emergency" : "completed",
+      status: waiting ? "awaiting_answer" : failure ? "failed" : s.status === "emergency" ? "emergency" : "completed",
       question: waiting ? (s.asked.at(-1)?.text ?? null) : null,
       level: LEVEL_NAME[s.level],
       record: countByStatus(s.record),
@@ -123,7 +151,8 @@ export class ConsultationService {
         quote: s.record[slot.id]?.quote || null,
       })),
       rounds: s.asked.length,
-      output: waiting ? null : s.output,
+      output: waiting || failure ? null : s.output,
+      error: failure,
       trace,
     };
   }
@@ -137,8 +166,19 @@ export class ConsultationService {
   async answer(id: string, text: string, owner: string): Promise<ConsultationView> {
     const snap = await this.snapshot(id);
     if ((snap.values as State).owner !== owner) throw new NotFoundError(id);
+    if (failureOf(snap)) throw new ConflictError("consultation failed; POST /v1/consultations/:id/retry to resume it");
     if (!snap.tasks.some((t) => t.interrupts.length > 0)) throw new ConflictError("consultation is not waiting for an answer");
     const trace = await this.run(id, new Command({ resume: text }));
+    return this.view(id, trace);
+  }
+
+  /** Resume a failed consultation from the step that failed, on the same thread. */
+  async retry(id: string, owner: string): Promise<ConsultationView> {
+    const snap = await this.snapshot(id);
+    if ((snap.values as State).owner !== owner) throw new NotFoundError(id);
+    if (!failureOf(snap)) throw new ConflictError("consultation has not failed; nothing to retry");
+    // A null input makes LangGraph re-run the errored task from the last checkpoint.
+    const trace = await this.run(id, null);
     return this.view(id, trace);
   }
 
