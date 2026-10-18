@@ -13,7 +13,8 @@ Agent 只拿到主诉，要靠自己追问把信息问出来。它写出的病�
 | **C** Agent·模拟患者 | 只有一句主诉 | LangGraph agent 追问，由模拟患者回答 | 本项目 |
 
 - **模拟患者**：另一个 LLM，只能根据病例原对话回答，没有的信息答「不太清楚」，不许说诊断名（`src/lib/agent/prompts.ts` → `patientPrompt`）。
-- **裁判**：仓库原有的评分 prompt，默认 `openai/gpt-4o-mini`，对照 `data/cases.ts` 的标准答案打 4 项分。Phase 0 已改为解析失败直接报错，不再静默给默认分。
+- **裁判**：仓库原有的评分 prompt，对照 `data/cases.ts` 的标准答案打 4 项分。Phase 0 已改为解析失败直接报错，不再静默给默认分。
+- **偏差控制**（#8）：模拟患者和裁判各用一个与被测 agent **不同家族**的模型，两者之间也不同家族（`--patient` / `--judge` 默认 `auto`，自动挑选；手动指定了同家族的模型会直接报错退出）。以前模拟患者和 agent 用同一个模型，默认裁判 `openai/gpt-4o-mini` 又和默认 agent 同属 OpenAI，可能「自己人给自己人打高分」。
 - **总分**：四项按原权重加权（去掉「响应速度」后重新归一），0-100。
 
 ## 其他指标
@@ -30,16 +31,20 @@ npx tsx scripts/eval-agent.ts --mock
 
 # 真实模型（需要 AI_GATEWAY_API_KEY，且网络能访问 ai-gateway.vercel.sh）
 npx tsx scripts/eval-agent.ts --model gpt-4o-mini --runs 3
-npx tsx scripts/eval-agent.ts --model claude-sonnet --runs 3 --judge openai/gpt-4o-mini
+npx tsx scripts/eval-agent.ts --model claude-sonnet --runs 3   # 患者、裁判自动选 OpenAI / DeepSeek
 ```
 
 结果写入 `docs/agent/eval/results-<tag>.json`（含每次的完整输出和问诊记录）和 `summary-<tag>.md`。
 
 ## 当前结果
 
-**真实模型：尚未运行。** 开发环境的网络策略拦截了 `ai-gateway.vercel.sh`，也没有 API key。拿到 key 后执行上面的命令，把 summary 贴到这里。
+| 运行 | 结果 |
+|---|---|
+| `eval-agent.ts --runs 3`，真实模型 | **待运行：需要密钥**（本次开发环境没有 `AI_GATEWAY_API_KEY`） |
+| `eval-agent.ts --mock`，修复前（[summary](eval/summary-mock-2026-09-27.md)） | 6/6 跑通；C 条件总分 85.7；事实 27 条，原话校验丢弃 0 条 |
+| `eval-agent.ts --mock`，修复后（[summary](eval/summary-mock-2026-10-18.md)） | 6/6 跑通；C 条件总分 **85.7（不变）**；事实 26 条，丢弃 1 条（患者答的「会的」：2 个字，又不是整轮回答，按 #5 的规则丢弃） |
 
-**离线 mock**（[`eval/summary-mock-2026-09-27.md`](eval/summary-mock-2026-09-27.md)）：三个条件、6 个病例全部跑通，JSON 和汇总表正常生成。mock 模型、mock 患者、mock 裁判都是关键词规则，**分数没有任何医学意义**，只说明评测流程本身是通的。
+mock 模型、mock 患者、mock 裁判都是关键词规则，**分数没有任何医学意义**，只说明评测流程本身是通的，以及 #5 收紧原话校验后没有误杀 mock 的正常事实。
 
 ## 危险信号评测（issue #8 / #4）
 
@@ -79,9 +84,47 @@ npx tsx scripts/eval-red-flags.ts --model                    # backend 分级节
 | backend 分级，真实 Bedrock（模型 + 规则） | **待运行：需要密钥**（本次开发环境没有 `BEDROCK_ACCESS_KEY_ID` / `BEDROCK_SECRET_ACCESS_KEY`） |
 | backend 分级，离线 mock（[summary](eval/redflags-summary-model-mock-baseline-2026-10-18.md)） | 流程跑通，72/72。mock 模型恒定返回 4 级，数字只反映规则部分 |
 
-### 偏差控制
+### 修复后（#4 之后）与前后对比
 
-后续的真实模型评测（`eval-agent.ts --runs 3`、`eval-backend.ts`）中，模拟患者和裁判各用一个与被测 agent **不同家族**的模型，避免同一家族的模型互相「对口径」，给自己打高分。
+规则（[`eval/redflags-summary-rules-after-2026-10-18.md`](eval/redflags-summary-rules-after-2026-10-18.md)）：
+
+| 实现 | 危险信号召回（修复前 → 后） | 明确否认误报 | 普通主诉误报 | 覆盖缺口 |
+|---|---|---|---|---|
+| src（Next） | 58.3% → **100%**（36/36） | 1/19 → **0/19** | 0/15 → 0/15 | 2 条（不变） |
+| backend（Bedrock） | 64.5% → **100%**（31/31） | 1/19 → **0/19** | 0/15 → 0/15 | 7 条（不变） |
+
+按类别（src，修复前 → 后）：不表示否定的组合词 1/14 → 14/14；转折句 1/2 → 2/2；多轮 1/2 → 2/2；问句 0/1 → 1/1；平铺直叙 14/14 → 14/14。
+
+| 模式 | 修复前 | 修复后 |
+|---|---|---|
+| backend 分级，真实 Bedrock（模型 + 规则） | 待运行：需要密钥 | 待运行：需要密钥 |
+| backend 分级，离线 mock（模型恒为 4 级，只看规则） | 召回 52.6%，否认/普通误判急诊 2.9% | 召回 **81.6%**，误判急诊 **0%**（剩下的是 backend 规则表的 7 条覆盖缺口，规则表合并留给 #13） |
+
+原话校验丢弃数（#5）：`eval-agent --mock` 共 27 条事实，丢弃 0 → 1 条（见上）。backend 的丢弃数现在由 `eval-backend.ts` 统计，离线 mock 平均 0.2 条/次（resp-001 有 1 条）。修复前没有这项统计，所以 backend 没有修复前的数字。
+
+## Backend 评测（`scripts/eval-backend.ts`）
+
+在 6 个演示病例上跑 backend 的完整问诊：
+
+- **agent**：Bedrock 上的 Claude，快档负责提取、分级、改写问题，慢档负责写病历、自查。
+- **模拟患者**：AI Gateway 上的 `openai/gpt-4o-mini`。
+- **裁判**：AI Gateway 上的 `deepseek/deepseek-chat`。三者属于三个不同的模型家族，脚本会检查。
+- **评分**：裁判**对照实际发生的对话**评价病历的完整性和准确性，并逐条列出找不到依据的陈述。不对照标准诊断，因为 backend 本来就不写诊断。
+
+每次问诊都记录：模型调用次数、输入/输出 tokens、成本、模型耗时、端到端耗时、追问轮数、原话校验丢弃数。
+
+- **用量按问诊统计**：以前 `llm.usage` 是整个进程共用一个数组（`backend/src/llm.ts`），几个问诊同时跑时没法区分。现在每条用量记录都带上问诊编号（AsyncLocalStorage），`service.usageFor(id)` 按问诊汇总。
+- **成本**：按 `PRICE_PER_MTOK` 价格表计算（Anthropic 官方标价：Haiku 4.5 $1/$5、Sonnet 4.6 $3/$15，单位为每百万 tokens 的输入/输出价格）。Bedrock 的计价以 AWS 价格页为准。
+
+```bash
+npx tsx scripts/eval-backend.ts --mock     # 离线
+npx tsx scripts/eval-backend.ts --runs 3   # 需要 BEDROCK_* 和 AI_GATEWAY_API_KEY
+```
+
+| 运行 | 结果 |
+|---|---|
+| 真实 Bedrock | **待运行：需要密钥** |
+| 离线 mock（[summary](eval/backend-summary-mock-2026-10-18.md)） | 6/6 跑通，平均 3.5 轮、14.5 次调用。mock 没有 tokens，也不定价，所以成本列为空。mock 裁判只看患者原话有没有进入病历，数字只说明流程是通的 |
 
 ## CrewAI 对照（Phase 5）
 

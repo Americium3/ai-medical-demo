@@ -3,6 +3,7 @@
  * implementations sit behind the same interface: Amazon Bedrock (via
  * LangChain's ChatBedrockConverse) and a deterministic offline mock.
  */
+import { AsyncLocalStorage } from "node:async_hooks";
 import { ChatBedrockConverse } from "@langchain/aws";
 import type { BedrockRuntimeClient } from "@aws-sdk/client-bedrock-runtime";
 import { AIMessage, HumanMessage, SystemMessage } from "@langchain/core/messages";
@@ -34,6 +35,49 @@ export interface UsageRecord {
   inputTokens: number;
   outputTokens: number;
   ms: number;
+  /** The consultation this call ran for; one LLM instance serves every consultation in the process. */
+  consultationId?: string;
+}
+
+/** The service runs each consultation inside this scope, so usage records can be attributed to it. */
+export const consultationScope = new AsyncLocalStorage<string>();
+
+/**
+ * USD per million tokens, Anthropic list prices (claude-api skill model table, 2026-10).
+ * Bedrock bills Claude at its own rates (https://aws.amazon.com/bedrock/pricing/); check
+ * them before quoting costs. Matched by substring of the model id.
+ */
+export const PRICE_PER_MTOK: { match: string; input: number; output: number }[] = [
+  { match: "claude-haiku-4-5", input: 1, output: 5 },
+  { match: "claude-sonnet-4-6", input: 3, output: 15 },
+  { match: "claude-haiku-5-5", input: 0.1, output: 0.5 },
+  { match: "claude-sonnet-5-5", input: 2, output: 10 },
+  { match: "claude-opus-5-5", input: 4, output: 20 },
+];
+
+export interface UsageSummary {
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  /** null when a model in the records has no price in PRICE_PER_MTOK (e.g. the offline mock). */
+  costUsd: number | null;
+  ms: number;
+}
+
+export function summarizeUsage(records: UsageRecord[]): UsageSummary {
+  let cost: number | null = 0;
+  for (const r of records) {
+    const price = PRICE_PER_MTOK.find((p) => r.model.includes(p.match));
+    if (!price) cost = null;
+    else if (cost !== null) cost += (r.inputTokens * price.input + r.outputTokens * price.output) / 1e6;
+  }
+  return {
+    calls: records.length,
+    inputTokens: records.reduce((n, r) => n + r.inputTokens, 0),
+    outputTokens: records.reduce((n, r) => n + r.outputTokens, 0),
+    costUsd: cost,
+    ms: records.reduce((n, r) => n + r.ms, 0),
+  };
 }
 
 export interface LLM {
@@ -132,6 +176,7 @@ export function createBedrockLLM(opts: BedrockOptions): LLM {
           inputTokens: reply.usage_metadata?.input_tokens ?? 0,
           outputTokens: reply.usage_metadata?.output_tokens ?? 0,
           ms: Date.now() - started,
+          consultationId: consultationScope.getStore(),
         });
         const raw = reply.tool_calls?.find((c) => c.name === tool.function.name)?.args;
         // Models sometimes send a nested object or array as a JSON string; decode those before validating.

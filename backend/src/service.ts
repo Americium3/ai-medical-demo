@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { Command, type BaseCheckpointSaver } from "@langchain/langgraph";
 import { buildGraph, type State } from "./graph";
 import type { Tracing } from "../../shared/tracing/langfuse";
-import { LLMError, type LLM, type UsageRecord } from "./llm";
+import { consultationScope, LLMError, summarizeUsage, type LLM, type UsageRecord, type UsageSummary } from "./llm";
 import { countByStatus, type SlotStatus } from "./record";
 import { slotsFor, templateById, type SlotKind } from "./templates";
 import { LEVEL_NAME } from "./triage";
@@ -107,11 +107,20 @@ export class ConsultationService {
     return this.llm.usage;
   }
 
+  /** Calls, tokens, cost and model time spent on one consultation. */
+  usageFor(id: string): UsageSummary {
+    return summarizeUsage(this.llm.usage.filter((u) => u.consultationId === id));
+  }
+
   private config(id: string) {
     return { configurable: { thread_id: id } };
   }
 
-  private async run(id: string, input: unknown): Promise<TraceStep[]> {
+  private run(id: string, input: unknown): Promise<TraceStep[]> {
+    return consultationScope.run(id, () => this.runInScope(id, input));
+  }
+
+  private async runInScope(id: string, input: unknown): Promise<TraceStep[]> {
     const trace: TraceStep[] = [];
     try {
       // Every run of one consultation lands in the same Langfuse session, keyed by its thread_id.

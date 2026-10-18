@@ -3,7 +3,7 @@
  * API and CLI can be run and tested without AWS credentials. Its clinical
  * judgement is keyword matching; it says nothing about real model quality.
  */
-import type { LLM, StructuredCall, Task, UsageRecord } from "./llm";
+import { consultationScope, type LLM, type StructuredCall, type Task, type UsageRecord } from "./llm";
 import type { RecordTable } from "./record";
 import type { ExtractOutput, NoteOutput, PhraseOutput, ReviewOutput, TriageOutput } from "./schemas";
 import { slotsFor, type Slot, type Template } from "./templates";
@@ -102,7 +102,7 @@ export function createMockLLM(overrides: Partial<Record<Task, (ctx: never, n: nu
       const out = overrides[call.task]
         ? overrides[call.task]!(call.context as never, n)
         : HANDLERS[call.task](call.context as never);
-      usage.push({ task: call.task, model: "mock", inputTokens: 0, outputTokens: 0, ms: 0 });
+      usage.push({ task: call.task, model: "mock", inputTokens: 0, outputTokens: 0, ms: 0, consultationId: consultationScope.getStore() });
       return call.schema.parse(out);
     },
   };

@@ -12,8 +12,13 @@
  *   npx tsx scripts/eval-agent.ts --mock                 # offline: validates the harness only
  *   AI_GATEWAY_API_KEY=... npx tsx scripts/eval-agent.ts --model gpt-4o-mini --runs 3
  *
- * Flags: --mock  --model <id from src/data/models.ts>  --judge <gateway id>
- *        --runs <n>  --cases id1,id2  --concurrency <n>  --out <dir>
+ * Flags: --mock  --model <id from src/data/models.ts>  --patient <gateway id|auto>
+ *        --judge <gateway id|auto>  --runs <n>  --cases id1,id2  --concurrency <n>  --out <dir>
+ *
+ * Bias control: the simulated patient and the judge each come from a different
+ * model family (openai/, anthropic/, deepseek/ ...) than the agent, and from
+ * each other. "auto" picks such a model; an explicit choice that breaks the
+ * rule is refused.
  */
 import { parseArgs } from "node:util";
 import { generateText, type LanguageModel } from "ai";
@@ -35,7 +40,8 @@ const { values: args } = parseArgs({
   options: {
     mock: { type: "boolean", default: false },
     model: { type: "string", default: "gpt-4o-mini" },
-    judge: { type: "string", default: "openai/gpt-4o-mini" },
+    patient: { type: "string", default: "auto" },
+    judge: { type: "string", default: "auto" },
     runs: { type: "string", default: "1" },
     cases: { type: "string" },
     concurrency: { type: "string", default: "3" },
@@ -51,6 +57,29 @@ if (!MOCK && !process.env.AI_GATEWAY_API_KEY) {
 const modelInfo = getModelById(args.model!);
 if (!modelInfo) throw new Error(`Unknown model ${args.model}; see src/data/models.ts`);
 const RUNS = Number(args.runs);
+
+// ---- bias control: three different model families ---------------------------
+
+/** Cheap gateway models, one per family, for the simulated patient and the judge. */
+const ROLE_CANDIDATES = ["openai/gpt-4o-mini", "deepseek/deepseek-chat", "anthropic/claude-sonnet-4-20250514"];
+const family = (gatewayId: string) => gatewayId.split("/")[0];
+
+function pickRoleModel(requested: string, avoid: string[]): string {
+  const taken = new Set(avoid.map(family));
+  if (requested !== "auto") {
+    if (taken.has(family(requested))) {
+      console.error(`${requested} is the same model family as the agent or the other evaluator role (${avoid.join(", ")}). Pick another family.`);
+      process.exit(1);
+    }
+    return requested;
+  }
+  const found = ROLE_CANDIDATES.find((m) => !taken.has(family(m)));
+  if (!found) throw new Error(`no candidate model outside families ${[...taken].join(", ")}`);
+  return found;
+}
+
+const patientModel = pickRoleModel(args.patient!, [modelInfo.gatewayId]);
+const judgeModelId = pickRoleModel(args.judge!, [modelInfo.gatewayId, patientModel]);
 const cases = args.cases
   ? MEDICAL_CASES.filter((c) => args.cases!.split(",").includes(c.id))
   : MEDICAL_CASES;
@@ -75,7 +104,7 @@ function mockTextModel(): LanguageModel {
 }
 
 const oneShotModel: LanguageModel = MOCK ? mockTextModel() : gateway(modelInfo.gatewayId);
-const judgeModel: LanguageModel | null = MOCK ? null : gateway(args.judge!);
+const judgeModel: LanguageModel | null = MOCK ? null : gateway(judgeModelId);
 
 /** Offline judge: keyword overlap with the reference answer. Measures the harness, not medicine. */
 function mockJudge(c: MedicalCase, text: string): JudgeScore {
@@ -162,7 +191,7 @@ async function agent(c: MedicalCase, run: number): Promise<Result> {
   const started = Date.now();
   const llm = MOCK ? createMockLLM() : createGatewayLLM(modelInfo!.gatewayId);
   // The patient gets its own LLM instance so its tokens are not billed to the agent.
-  const patient = MOCK ? createScriptedPatient(c) : createLLMPatient(c, createGatewayLLM(modelInfo!.gatewayId));
+  const patient = MOCK ? createScriptedPatient(c) : createLLMPatient(c, createGatewayLLM(patientModel));
   try {
     const { state, usage } = await runToCompletion(
       { llm, mode: "simulated", patient },
@@ -264,11 +293,12 @@ async function main() {
     date: new Date().toISOString(),
     mode: MOCK ? "mock" : "gateway",
     model: MOCK ? "mock" : modelInfo!.gatewayId,
-    judge: MOCK ? "mock" : args.judge,
+    patient: MOCK ? "scripted" : patientModel,
+    judge: MOCK ? "mock" : judgeModelId,
     runs: RUNS,
     cases: cases.map((c) => c.id),
   };
-  const summary = `# Eval ${tag}\n\n${MOCK ? "> ⚠️ 离线 mock 运行：模型、患者、裁判都是确定性替身，分数只验证评测流程能跑通，**不代表任何模型的真实水平**。\n\n" : ""}- 模型：${meta.model}\n- 裁判：${meta.judge}\n- 每个病例运行次数：${RUNS}\n\n${summarize(results)}\n`;
+  const summary = `# Eval ${tag}\n\n${MOCK ? "> ⚠️ 离线 mock 运行：模型、患者、裁判都是确定性替身，分数只验证评测流程能跑通，**不代表任何模型的真实水平**。\n\n" : ""}- 模型：${meta.model}\n- 模拟患者：${meta.patient}\n- 裁判：${meta.judge}\n- 每个病例运行次数：${RUNS}\n\n${summarize(results)}\n`;
   const files = writeEvalOutput({ dir: args.out!, tag, meta, results, summary });
   console.log(`\n${summary}\nwrote ${files.json} and ${files.md}`);
 }

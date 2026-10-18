@@ -1,8 +1,9 @@
 {
   "meta": {
-    "date": "2026-10-18T17:19:06.345Z",
+    "date": "2026-10-18T17:32:05.638Z",
     "mode": "mock",
     "model": "mock",
+    "patient": "scripted",
     "judge": "mock",
     "runs": 1,
     "cases": [
@@ -28,7 +29,7 @@
         "comments": "mock judge"
       },
       "total": 81.5,
-      "ms": 34,
+      "ms": 37,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 社区获得性肺炎\n**鉴别诊断：** 急性支气管炎、上呼吸道感染\n**辅助检查：** 血常规、C反应蛋白、胸部X线\n**处置建议：** 阿莫西林克拉维酸钾、氨溴索"
@@ -46,7 +47,7 @@
         "comments": "mock judge"
       },
       "total": 81.5,
-      "ms": 29,
+      "ms": 33,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 社区获得性肺炎\n**鉴别诊断：** 急性支气管炎、上呼吸道感染\n**辅助检查：** 血常规、C反应蛋白、胸部X线\n**处置建议：** 阿莫西林克拉维酸钾、氨溴索"
@@ -64,7 +65,7 @@
         "comments": "mock judge"
       },
       "total": 90,
-      "ms": 128,
+      "ms": 138,
       "tokens": 0,
       "calls": 8,
       "agent": {
@@ -106,7 +107,7 @@
         "comments": "mock judge"
       },
       "total": 82.4,
-      "ms": 5,
+      "ms": 6,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 急性胃肠炎\n**鉴别诊断：** 细菌性痢疾、食物中毒\n**辅助检查：** 血常规、大便常规+培养、电解质\n**处置建议：** 蒙脱石散、口服补液盐"
@@ -124,7 +125,7 @@
         "comments": "mock judge"
       },
       "total": 82.4,
-      "ms": 4,
+      "ms": 5,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 急性胃肠炎\n**鉴别诊断：** 细菌性痢疾、食物中毒\n**辅助检查：** 血常规、大便常规+培养、电解质\n**处置建议：** 蒙脱石散、口服补液盐"
@@ -142,7 +143,7 @@
         "comments": "mock judge"
       },
       "total": 90.9,
-      "ms": 117,
+      "ms": 125,
       "tokens": 0,
       "calls": 11,
       "agent": {
@@ -210,7 +211,7 @@
         "comments": "mock judge"
       },
       "total": 76.5,
-      "ms": 7,
+      "ms": 11,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 冠状动脉粥样硬化性心脏病\n**鉴别诊断：** 心律失常、高血压性心脏病\n**辅助检查：** 心电图、心脏超声、血脂全套\n**处置建议：** 阿司匹林、阿托伐他汀"
@@ -228,7 +229,7 @@
         "comments": "mock judge"
       },
       "total": 85.1,
-      "ms": 103,
+      "ms": 107,
       "tokens": 0,
       "calls": 11,
       "agent": {
@@ -296,7 +297,7 @@
         "comments": "mock judge"
       },
       "total": 73,
-      "ms": 4,
+      "ms": 3,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 偏头痛\n**鉴别诊断：** 紧张型头痛、颅内占位\n**辅助检查：** 头颅MRI\n**处置建议：** 布洛芬"
@@ -314,7 +315,7 @@
         "comments": "mock judge"
       },
       "total": 81.5,
-      "ms": 64,
+      "ms": 61,
       "tokens": 0,
       "calls": 11,
       "agent": {
@@ -382,7 +383,7 @@
         "comments": "mock judge"
       },
       "total": 77,
-      "ms": 2,
+      "ms": 1,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 腰椎间盘突出症\n**鉴别诊断：** 腰肌劳损、腰椎管狭窄\n**辅助检查：** 腰椎MRI、腰椎X线\n**处置建议：** 塞来昔布、甲钴胺"
@@ -400,7 +401,7 @@
         "comments": "mock judge"
       },
       "total": 85.5,
-      "ms": 52,
+      "ms": 50,
       "tokens": 0,
       "calls": 11,
       "agent": {
@@ -450,7 +451,7 @@
         "comments": "mock judge"
       },
       "total": 72.5,
-      "ms": 4,
+      "ms": 3,
       "tokens": 0,
       "calls": 1,
       "output": "**主诉：** 见对话\n**初步诊断：** 2型糖尿病\n**鉴别诊断：** 1型糖尿病、甲状腺功能亢进\n**辅助检查：** 空腹血糖、糖化血红蛋白、OGTT\n**处置建议：** 二甲双胍"
@@ -486,7 +487,7 @@
         "comments": "mock judge"
       },
       "total": 81.1,
-      "ms": 48,
+      "ms": 45,
       "tokens": 0,
       "calls": 11,
       "agent": {
