@@ -12,7 +12,7 @@ if (cfg.apiKeys.length === 0) {
 }
 mkdirSync(path.dirname(cfg.dbPath), { recursive: true });
 const tracer = createTracer(cfg);
-const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, tracer);
+const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, tracer, { phrasing: cfg.phrasing });
 const server = createApiServer({
   service,
   apiKeys: cfg.apiKeys,

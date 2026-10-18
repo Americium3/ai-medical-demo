@@ -43,7 +43,7 @@ function local(): Backend {
   const cfg = loadConfig();
   mkdirSync(path.dirname(cfg.dbPath), { recursive: true });
   const tracer = createTracer(cfg);
-  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, tracer);
+  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, tracer, { phrasing: cfg.phrasing });
   console.log(`（本地运行，模型：${cfg.llm === "mock" ? "离线替身" : "AWS Bedrock"}，进度保存在 ${cfg.dbPath}）\n`);
   return {
     start: (c) => service.start(c, OWNER),

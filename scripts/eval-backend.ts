@@ -15,7 +15,10 @@
  * Per consultation it records calls, tokens, cost (llm.ts PRICE_PER_MTOK),
  * model time and wall-clock latency, rounds, and grounding rejects.
  *
- * Flags: --mock  --patient <gateway id>  --judge <gateway id>  --runs <n>
+ * --phrasing template asks the template wording instead of the model rewrite
+ * (#10: run both and compare before dropping the rewrite step).
+ *
+ * Flags: --mock  --patient <gateway id>  --judge <gateway id>  --runs <n>  --phrasing model|template
  *        --cases id1,id2  --out <dir>
  */
 import { mkdtempSync } from "node:fs";
@@ -39,6 +42,7 @@ const { values: args } = parseArgs({
     patient: { type: "string", default: "openai/gpt-4o-mini" },
     judge: { type: "string", default: "deepseek/deepseek-chat" },
     runs: { type: "string", default: "1" },
+    phrasing: { type: "string", default: "model" },
     cases: { type: "string" },
     out: { type: "string", default: "docs/agent/eval" },
   },
@@ -121,7 +125,7 @@ interface Result {
 function agentService(): ConsultationService {
   const db = path.join(mkdtempSync(path.join(tmpdir(), "eval-backend-")), "db.sqlite");
   const llm = MOCK ? createMockLLM() : createLLM(loadConfig({ ...process.env, AGENT_LLM: "bedrock" }));
-  return new ConsultationService(llm, createCheckpointer(db));
+  return new ConsultationService(llm, createCheckpointer(db), undefined, undefined, { phrasing: args.phrasing === "template" ? "template" : "model" });
 }
 
 async function consult(service: ConsultationService, c: MedicalCase, run: number): Promise<Result> {
@@ -192,7 +196,7 @@ async function main() {
     }
   }
   const stamp = new Date().toISOString().slice(0, 10);
-  const tag = `${MOCK ? "mock" : "bedrock"}-${stamp}`;
+  const tag = `${MOCK ? "mock" : "bedrock"}${args.phrasing === "template" ? "-template" : ""}-${stamp}`;
   const meta = {
     date: new Date().toISOString(),
     mode: MOCK ? "mock" : "bedrock",
@@ -200,6 +204,7 @@ async function main() {
     patient: MOCK ? "scripted" : args.patient,
     judge: MOCK ? "mock" : args.judge,
     runs: RUNS,
+    phrasing: args.phrasing,
     cases: cases.map((c) => c.id),
   };
   const summary = `# Backend eval ${tag}\n\n${MOCK ? "> ⚠️ 离线 mock：agent、患者、裁判都是确定性替身，只验证评测流程，**不代表模型水平**。\n\n" : ""}- agent：${meta.agent}\n- 模拟患者：${meta.patient}\n- 裁判：${meta.judge}\n- 每个病例运行次数：${RUNS}\n\n${summarize(results)}\n`;

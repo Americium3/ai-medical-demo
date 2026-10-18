@@ -16,13 +16,32 @@
 问诊流程如下：
 
 ```
-setup → understand → triage ─┬─ Ⅰ级或Ⅱ级 → emergency（提示急诊，结束）
-            ▲                ├─ 还有要问的 → ask → wait（暂停，等患者回答）┐
-            └────────────────┼─────────────────────────────────────────────┘
-                             └─ 问完了 → draft → check ─┬─ 通过 → finalize
-                                             ▲          │
-                                             └─ 不通过（最多重写2次）
+setup → screen ─┬─ 规则命中Ⅰ级或Ⅱ级 → emergency（不调用模型）
+          ▲     └─ understand ─┬─ triage ─┬─ Ⅰ级或Ⅱ级 → emergency（提示急诊，结束；改写好的问题丢弃）
+          │                    └─ phrase  ├─ 还有要问的 → ask → wait（暂停，等患者回答）┐
+          └───────────────────────────────┼─────────────────────────────────────────────┘
+                                          └─ 问完了 → draft → check ─┬─ 通过 → finalize
+                                                          ▲          │
+                                                          └─ 不通过（最多重写2次）
 ```
+
+- `screen`：每轮先用正则规则检查患者说过的话，命中Ⅰ、Ⅱ级直接进急诊，不调用模型。
+- `triage` 和 `phrase`（改写追问措辞）并行。`AGENT_PHRASING=template` 时不改写，直接用模板问法，每轮少一次调用。
+
+### 每轮延迟和成本（#10）
+
+`npx tsx scripts/bench-latency.ts` 跑 6 个演示病例和 2 个急诊场景。没有 Bedrock 密钥时，每次模型调用按假设的首字延迟和输出速度真实等待，tokens 按字符估算，按 Haiku 4.5 / Sonnet 4.6 标价计费。调用次数是准确的，秒数和美元是估算。
+
+| | 追问轮平均耗时 | 追问轮调用 | 追问轮成本 | 每次问诊调用 | 每次问诊成本 | 开场即急诊 |
+|---|---|---|---|---|---|---|
+| 优化前（串行） | 2.92s | 3 | $0.00337 | 11.8 | $0.0190 | 2 次调用 |
+| 并行改写（默认） | 2.05s（-30%） | 3 | $0.00337 | 11.3 | $0.0184 | 0 次调用 |
+| 模板问法 | 1.93s（-34%） | 2 | $0.00240（-29%） | 8.5 | $0.0158（-17%） | 0 次调用 |
+
+明细在 `docs/agent/eval/latency-summary-simulated-*.md`。
+
+- 待运行：需要密钥。真实 Bedrock 的数字用 `npx tsx scripts/bench-latency.ts --bedrock` 测。要决定是否去掉改写，用 `npx tsx scripts/eval-backend.ts --phrasing template` 和默认的 `--phrasing model` 各跑一次，比较完整性和准确性。
+- 提示缓存暂不开启：单次调用的输入最多约 1.1K tokens（估算），而 Haiku 4.5 至少 4096 tokens 才能缓存，Sonnet 4.6 至少 1024 tokens，并且记录表每轮都在变，固定的前缀只有几百 tokens。快档换成 Haiku 5.5（最低 512 tokens）后再评估。
 
 ## 二、本地一键运行
 
@@ -177,6 +196,7 @@ LANGFUSE_PUBLIC_KEY=pk-lf-... LANGFUSE_SECRET_KEY=sk-lf-... LANGFUSE_BASE_URL=ht
 | `BEDROCK_REGION` | Bedrock所在区域 | `us-east-2` |
 | `BEDROCK_FAST_MODEL_ID` | 快档模型ID | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
 | `BEDROCK_SMART_MODEL_ID` | 慢档模型ID | `us.anthropic.claude-sonnet-4-6` |
+| `AGENT_PHRASING` | `model`：追问措辞由快档模型改写（与分级并行）；`template`：直接用模板问法 | `model` |
 | `DB_PATH` | 问诊状态的保存位置 | `backend/data/consultations.sqlite` |
 | `API_KEYS` | 接口密钥，逗号分隔 | 无，启动HTTP服务时必填 |
 | `PORT` | HTTP端口 | `8787` |

@@ -12,7 +12,7 @@ import { ConsultationService } from "../src/service";
 
 test("concurrent consultations get their own call counts", async () => {
   const service = new ConsultationService(createMockLLM(), createCheckpointer(path.join(mkdtempSync(path.join(tmpdir(), "u-")), "db.sqlite")));
-  const [a, b] = await Promise.all([service.start("我头痛一周了", "k"), service.start("我胸口痛，一直出大汗", "k")]);
+  const [a, b] = await Promise.all([service.start("我头痛一周了", "k"), service.start("我咳嗽发烧三天了", "k")]);
   const ua = service.usageFor(a.id);
   const ub = service.usageFor(b.id);
   assert.ok(ua.calls > 0 && ub.calls > 0);

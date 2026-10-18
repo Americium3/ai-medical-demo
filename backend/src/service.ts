@@ -4,7 +4,7 @@
  */
 import { randomUUID } from "node:crypto";
 import { Command, type BaseCheckpointSaver } from "@langchain/langgraph";
-import { buildGraph, type State } from "./graph";
+import { buildGraph, type GraphOptions, type State } from "./graph";
 import type { Tracing } from "../../shared/tracing/langfuse";
 import { consultationScope, LLMError, summarizeUsage, type LLM, type UsageRecord, type UsageSummary } from "./llm";
 import { countByStatus, type SlotStatus } from "./record";
@@ -56,12 +56,16 @@ function summarize(node: string, u: Partial<State>): string {
   switch (node) {
     case "setup":
       return `选用模板：${u.templateId}`;
+    case "screen":
+      return u.level ? `规则筛查：命中危险信号，${LEVEL_NAME[u.level]}` : "规则筛查：未命中Ⅰ、Ⅱ级危险信号";
     case "understand": {
       const filled = Object.values(u.record ?? {}).filter((e) => e.status !== "unasked").length;
       return `更新记录表，已有结果 ${filled} 项${u.rejected?.length ? `，丢弃 ${u.rejected.length} 条找不到原话的内容` : ""}`;
     }
     case "triage":
       return `病情分级：${u.level ? LEVEL_NAME[u.level] : ""}`;
+    case "phrase":
+      return u.proposed ? "改写追问措辞" : "无需改写";
     case "ask":
       return `第 ${u.asked?.[0]?.round} 轮追问：${u.asked?.[0]?.slotIds.join("、")}`;
     case "wait":
@@ -87,6 +91,10 @@ function failureOf(snap: { tasks: readonly { error?: unknown }[] }): string | nu
   return typeof e?.message === "string" ? e.message : String(t.error);
 }
 
+export interface ServiceOptions {
+  phrasing?: GraphOptions["phrasing"];
+}
+
 export class ConsultationService {
   private graph;
 
@@ -95,8 +103,9 @@ export class ConsultationService {
     checkpointer: BaseCheckpointSaver,
     maxRounds?: number,
     private tracing?: Tracing,
+    opts: ServiceOptions = {},
   ) {
-    this.graph = buildGraph(llm, checkpointer, maxRounds);
+    this.graph = buildGraph(llm, checkpointer, { maxRounds, phrasing: opts.phrasing });
   }
 
   get modelKind(): string {

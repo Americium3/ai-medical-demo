@@ -1,0 +1,316 @@
+{
+  "meta": {
+    "date": "2026-10-18T20:46:54.829Z",
+    "mode": "simulated",
+    "label": "before",
+    "profile": {
+      "fast": {
+        "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+        "ttft": 0.6,
+        "tps": 150
+      },
+      "smart": {
+        "model": "us.anthropic.claude-sonnet-4-6",
+        "ttft": 1.2,
+        "tps": 70
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "resp-001",
+      "status": "completed",
+      "turns": [
+        {
+          "kind": "first",
+          "wallMs": 2937,
+          "calls": 3,
+          "costUsd": 0.0031460000000000004
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2953,
+          "calls": 3,
+          "costUsd": 0.0033350000000000003
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 3172,
+          "calls": 3,
+          "costUsd": 0.003628000000000001
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2970,
+          "calls": 3,
+          "costUsd": 0.0035979999999999988
+        },
+        {
+          "kind": "final",
+          "wallMs": 8149,
+          "calls": 4,
+          "costUsd": 0.013808
+        }
+      ],
+      "calls": 16,
+      "costUsd": 0.027515,
+      "inputTokensByTask": {
+        "extract": 1093,
+        "triage": 977,
+        "phrase": 704,
+        "note": 1228,
+        "review": 1172
+      }
+    },
+    {
+      "id": "gastro-001",
+      "status": "completed",
+      "turns": [
+        {
+          "kind": "first",
+          "wallMs": 2876,
+          "calls": 3,
+          "costUsd": 0.003183
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2885,
+          "calls": 3,
+          "costUsd": 0.003286
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2851,
+          "calls": 3,
+          "costUsd": 0.0032990000000000007
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2846,
+          "calls": 3,
+          "costUsd": 0.003334
+        },
+        {
+          "kind": "final",
+          "wallMs": 7351,
+          "calls": 4,
+          "costUsd": 0.012248000000000004
+        }
+      ],
+      "calls": 16,
+      "costUsd": 0.025350000000000004,
+      "inputTokensByTask": {
+        "extract": 1019,
+        "triage": 942,
+        "phrase": 718,
+        "note": 1192,
+        "review": 1022
+      }
+    },
+    {
+      "id": "cardio-001",
+      "status": "completed",
+      "turns": [
+        {
+          "kind": "first",
+          "wallMs": 3314,
+          "calls": 3,
+          "costUsd": 0.003587
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2894,
+          "calls": 3,
+          "costUsd": 0.003449999999999999
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2947,
+          "calls": 3,
+          "costUsd": 0.003568000000000001
+        },
+        {
+          "kind": "final",
+          "wallMs": 8733,
+          "calls": 4,
+          "costUsd": 0.014537000000000001
+        }
+      ],
+      "calls": 13,
+      "costUsd": 0.025142,
+      "inputTokensByTask": {
+        "extract": 1070,
+        "triage": 1006,
+        "phrase": 694,
+        "note": 1261,
+        "review": 1217
+      }
+    },
+    {
+      "id": "neuro-001",
+      "status": "completed",
+      "turns": [
+        {
+          "kind": "first",
+          "wallMs": 2845,
+          "calls": 3,
+          "costUsd": 0.003161
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2886,
+          "calls": 3,
+          "costUsd": 0.003278
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2852,
+          "calls": 3,
+          "costUsd": 0.0032910000000000005
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2845,
+          "calls": 3,
+          "costUsd": 0.003372
+        },
+        {
+          "kind": "final",
+          "wallMs": 6392,
+          "calls": 4,
+          "costUsd": 0.010693
+        }
+      ],
+      "calls": 16,
+      "costUsd": 0.023795,
+      "inputTokensByTask": {
+        "extract": 1002,
+        "triage": 882,
+        "phrase": 718,
+        "note": 1140,
+        "review": 901
+      }
+    },
+    {
+      "id": "ortho-001",
+      "status": "completed",
+      "turns": [
+        {
+          "kind": "first",
+          "wallMs": 2871,
+          "calls": 3,
+          "costUsd": 0.0030600000000000002
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2973,
+          "calls": 3,
+          "costUsd": 0.0032840000000000005
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2799,
+          "calls": 3,
+          "costUsd": 0.0031649999999999994
+        },
+        {
+          "kind": "final",
+          "wallMs": 7429,
+          "calls": 4,
+          "costUsd": 0.011864
+        }
+      ],
+      "calls": 13,
+      "costUsd": 0.021373,
+      "inputTokensByTask": {
+        "extract": 959,
+        "triage": 873,
+        "phrase": 678,
+        "note": 1130,
+        "review": 969
+      }
+    },
+    {
+      "id": "endo-001",
+      "status": "completed",
+      "turns": [
+        {
+          "kind": "first",
+          "wallMs": 2872,
+          "calls": 3,
+          "costUsd": 0.003058
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 2850,
+          "calls": 3,
+          "costUsd": 0.003182999999999999
+        },
+        {
+          "kind": "follow-up",
+          "wallMs": 3099,
+          "calls": 3,
+          "costUsd": 0.0034209999999999996
+        },
+        {
+          "kind": "final",
+          "wallMs": 6991,
+          "calls": 4,
+          "costUsd": 0.011316999999999999
+        }
+      ],
+      "calls": 13,
+      "costUsd": 0.020978999999999998,
+      "inputTokensByTask": {
+        "extract": 961,
+        "triage": 853,
+        "phrase": 678,
+        "note": 1117,
+        "review": 941
+      }
+    },
+    {
+      "id": "emergency-opening",
+      "status": "emergency",
+      "turns": [
+        {
+          "kind": "final",
+          "wallMs": 1861,
+          "calls": 2,
+          "costUsd": 0.002277
+        }
+      ],
+      "calls": 2,
+      "costUsd": 0.002277,
+      "inputTokensByTask": {
+        "extract": 925,
+        "triage": 867
+      }
+    },
+    {
+      "id": "emergency-later",
+      "status": "emergency",
+      "turns": [
+        {
+          "kind": "first",
+          "wallMs": 2894,
+          "calls": 3,
+          "costUsd": 0.003181
+        },
+        {
+          "kind": "final",
+          "wallMs": 1956,
+          "calls": 2,
+          "costUsd": 0.002423
+        }
+      ],
+      "calls": 5,
+      "costUsd": 0.005604,
+      "inputTokensByTask": {
+        "extract": 1001,
+        "triage": 867,
+        "phrase": 642
+      }
+    }
+  ]
+}

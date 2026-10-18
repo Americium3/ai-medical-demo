@@ -59,7 +59,7 @@ async function main() {
 
   const cfg = loadConfig(env);
   mkdirSync(path.dirname(cfg.dbPath), { recursive: true });
-  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, createTracer(cfg));
+  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, createTracer(cfg), { phrasing: cfg.phrasing });
   const server = createApiServer({ service, apiKeys: cfg.apiKeys, ratePerMinute: cfg.ratePerMinute, dailyConsultations: cfg.dailyConsultations });
 
   server.on("error", (err: NodeJS.ErrnoException) => {

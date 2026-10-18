@@ -15,6 +15,8 @@ export interface Config {
   apiKeys: string[];
   ratePerMinute: number;
   dailyConsultations: number;
+  /** "model" rewrites follow-up questions (in parallel with triage); "template" asks the template wording. */
+  phrasing: "model" | "template";
   /** Langfuse tracing; null unless LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_BASE_URL are set. */
   tracing: TracingOptions | null;
 }
@@ -39,6 +41,7 @@ export function loadConfig(env = process.env): Config {
     apiKeys: (env.API_KEYS ?? "").split(",").map((k) => k.trim()).filter(Boolean),
     ratePerMinute: Number(env.RATE_LIMIT_PER_MINUTE ?? 30),
     dailyConsultations: Number(env.DAILY_CONSULTATION_LIMIT ?? 200),
+    phrasing: env.AGENT_PHRASING === "template" ? "template" : "model",
     tracing: tracingOptionsFromEnv(env),
   };
   if (llm === "bedrock" && !cfg.credentials) {
