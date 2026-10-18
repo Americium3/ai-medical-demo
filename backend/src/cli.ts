@@ -14,7 +14,7 @@ import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { parseArgs } from "node:util";
 import { MEDICAL_CASES } from "../../src/data/cases";
-import { createCheckpointer, createLLM, loadConfig } from "./config";
+import { createCheckpointer, createLLM, createTracer, loadConfig } from "./config";
 import { ConsultationService, ModelFailureError, type ConsultationView } from "./service";
 import { slotsFor, TEMPLATES } from "./templates";
 
@@ -34,6 +34,7 @@ interface Backend {
   get(id: string): Promise<ConsultationView>;
   retry(id: string): Promise<ConsultationView>;
   record?(id: string): Promise<string>;
+  close?(): Promise<void>;
 }
 
 const OWNER = "cli";
@@ -41,13 +42,15 @@ const OWNER = "cli";
 function local(): Backend {
   const cfg = loadConfig();
   mkdirSync(path.dirname(cfg.dbPath), { recursive: true });
-  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath));
+  const tracer = createTracer(cfg);
+  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, tracer);
   console.log(`（本地运行，模型：${cfg.llm === "mock" ? "离线替身" : "AWS Bedrock"}，进度保存在 ${cfg.dbPath}）\n`);
   return {
     start: (c) => service.start(c, OWNER),
     answer: (id, t) => service.answer(id, t, OWNER),
     get: (id) => service.get(id, OWNER),
     retry: (id) => service.retry(id, OWNER),
+    close: async () => tracer?.shutdown(),
     async record(id) {
       const s = await service.state(id);
       const t = TEMPLATES.find((x) => x.id === s.templateId);
@@ -184,6 +187,7 @@ async function main() {
     show(view);
   }
   rl.close();
+  await backend.close?.();
 }
 
 main().catch((err) => {

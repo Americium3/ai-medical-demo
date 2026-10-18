@@ -5,6 +5,7 @@
 import { randomUUID } from "node:crypto";
 import { Command, type BaseCheckpointSaver } from "@langchain/langgraph";
 import { buildGraph, type State } from "./graph";
+import type { Tracing } from "../../shared/tracing/langfuse";
 import { LLMError, type LLM, type UsageRecord } from "./llm";
 import { countByStatus, type SlotStatus } from "./record";
 import { slotsFor, templateById, type SlotKind } from "./templates";
@@ -93,6 +94,7 @@ export class ConsultationService {
     private llm: LLM,
     checkpointer: BaseCheckpointSaver,
     maxRounds?: number,
+    private tracing?: Tracing,
   ) {
     this.graph = buildGraph(llm, checkpointer, maxRounds);
   }
@@ -112,7 +114,9 @@ export class ConsultationService {
   private async run(id: string, input: unknown): Promise<TraceStep[]> {
     const trace: TraceStep[] = [];
     try {
-      const stream = await this.graph.stream(input as never, { ...this.config(id), streamMode: "updates" });
+      // Every run of one consultation lands in the same Langfuse session, keyed by its thread_id.
+      const callbacks = this.tracing ? [this.tracing.handler(id, { consultationId: id })] : undefined;
+      const stream = await this.graph.stream(input as never, { ...this.config(id), streamMode: "updates", callbacks });
       for await (const chunk of stream) {
         for (const [node, update] of Object.entries(chunk as Record<string, unknown>)) {
           if (node === "__interrupt__") continue;

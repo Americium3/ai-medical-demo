@@ -12,7 +12,7 @@ import { randomBytes } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
-import { createCheckpointer, createLLM, loadConfig } from "./config";
+import { createCheckpointer, createLLM, createTracer, loadConfig } from "./config";
 import { createApiServer } from "./server";
 import { ConsultationService } from "./service";
 
@@ -59,7 +59,7 @@ async function main() {
 
   const cfg = loadConfig(env);
   mkdirSync(path.dirname(cfg.dbPath), { recursive: true });
-  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath));
+  const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, createTracer(cfg));
   const server = createApiServer({ service, apiKeys: cfg.apiKeys, ratePerMinute: cfg.ratePerMinute, dailyConsultations: cfg.dailyConsultations });
 
   server.on("error", (err: NodeJS.ErrnoException) => {

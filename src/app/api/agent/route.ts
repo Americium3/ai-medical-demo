@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { AgentConfigError, resolveAgentLLM } from "@/lib/agent/config";
 import { runConsultation } from "@/lib/agent/run";
+import { getAgentTracer } from "@/lib/agent/tracing";
 
 export const runtime = "nodejs";
 // A final turn runs up to ~11 model calls (with two self-check rewrites).
@@ -44,13 +45,22 @@ export async function POST(req: Request) {
     throw err;
   }
 
+  // Requests are stateless, so each one is its own Langfuse session under a fresh run id.
+  const tracer = getAgentTracer();
+  const runId = crypto.randomUUID();
+  const callbacks = tracer ? [tracer.handler(runId, { runId, route: "/api/agent" })] : undefined;
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
-      for await (const event of runConsultation({ llm, mode: "interactive" }, parsed.data.transcript)) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+      try {
+        for await (const event of runConsultation({ llm, mode: "interactive" }, parsed.data.transcript, { callbacks })) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+        }
+      } finally {
+        await tracer?.flush().catch(() => {});
+        controller.close();
       }
-      controller.close();
     },
   });
 

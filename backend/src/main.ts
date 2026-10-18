@@ -1,7 +1,7 @@
 /** Start the HTTP server: `npm run backend:server`. */
 import { mkdirSync } from "node:fs";
 import path from "node:path";
-import { createCheckpointer, createLLM, loadConfig } from "./config";
+import { createCheckpointer, createLLM, createTracer, loadConfig } from "./config";
 import { createApiServer } from "./server";
 import { ConsultationService } from "./service";
 
@@ -11,7 +11,8 @@ if (cfg.apiKeys.length === 0) {
   process.exit(1);
 }
 mkdirSync(path.dirname(cfg.dbPath), { recursive: true });
-const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath));
+const tracer = createTracer(cfg);
+const service = new ConsultationService(createLLM(cfg), createCheckpointer(cfg.dbPath), undefined, tracer);
 const server = createApiServer({
   service,
   apiKeys: cfg.apiKeys,
@@ -21,3 +22,11 @@ const server = createApiServer({
 server.listen(cfg.port, () => {
   console.log(`consultation backend on http://localhost:${cfg.port} (model: ${cfg.llm}, db: ${cfg.dbPath})`);
 });
+
+// Send any batched Langfuse spans before exiting.
+for (const signal of ["SIGINT", "SIGTERM"] as const) {
+  process.on(signal, () => {
+    server.close();
+    void (tracer?.shutdown() ?? Promise.resolve()).finally(() => process.exit(0));
+  });
+}

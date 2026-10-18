@@ -122,6 +122,44 @@ curl -X POST localhost:8787/v1/consultations/<问诊编号>/retry -H 'authorizat
 npm run backend:cli -- --server http://localhost:8787 --key demo-key-123 --case resp-001
 ```
 
+## 五（附）、节点级追踪（Langfuse）
+
+每次问诊的每个图节点（setup、understand、triage、ask、wait、draft、check、finalize/emergency）都会记成 Langfuse 的一个 span：
+
+- 每次调用（开始、每轮回答、重试）是一条 trace。
+- 同一次问诊的所有 trace 归在同一个 session 下，session id 就是问诊编号（LangGraph 的 `thread_id`），在 Langfuse 里按 session 就能看到整次问诊每一步的输入、输出和耗时。
+- Next.js 的 `/api/agent` 也接了同样的追踪：每个请求生成一个 run id，当作 session。
+
+**默认关闭**。只有 `LANGFUSE_PUBLIC_KEY`、`LANGFUSE_SECRET_KEY`、`LANGFUSE_BASE_URL` 三个都设置了才开启，代码在 `shared/tracing/langfuse.ts`。
+
+**隐私**：患者说的话属于敏感数据，默认推荐**自托管** Langfuse。所有 span 在发出前都会经过脱敏：
+
+| `LANGFUSE_BASE_URL` | 脱敏方式 |
+|---|---|
+| localhost、内网地址（10.x / 172.16–31.x / 192.168.x）、`*.local`、`*.internal`，或设置了 `LANGFUSE_SELF_HOSTED=true` | 只隐藏手机号和身份证号，其余文本保留，方便排查 |
+| 其他地址（比如 Langfuse Cloud） | **全部文本**都替换成「[已隐藏 N 字]」，只保留图结构、耗时和 token 数 |
+
+本地启动 Langfuse，用官方的 docker compose（包含 Postgres、ClickHouse、Redis、MinIO）：
+
+```bash
+git clone https://github.com/langfuse/langfuse.git
+cd langfuse
+docker compose up -d
+# 浏览器打开 http://localhost:3000，注册、建项目，在 Settings → API Keys 生成密钥
+```
+
+然后：
+
+```bash
+LANGFUSE_PUBLIC_KEY=pk-lf-... LANGFUSE_SECRET_KEY=sk-lf-... LANGFUSE_BASE_URL=http://localhost:3000 \
+  API_KEYS=demo-key-123 npm run backend:server
+```
+
+<!-- TODO(#9): 接入真实 Langfuse 后，把一次完整问诊的 trace 截图放在 docs/agent/img/langfuse-trace.png，并在这里引用。 -->
+> 截图待补：需要一个运行中的 Langfuse 实例（本次开发环境没有）。
+
+依赖版本：`@langfuse/langchain`、`@langfuse/otel`、`@langfuse/tracing`、`@langfuse/core` 固定在 5.11.1，OpenTelemetry 固定在 2.11.0。6.0.0 刚发布几天，暂不升级。
+
 ## 六、安全设置
 
 1. 除健康检查外，所有接口都要求 `Authorization: Bearer <接口密钥>`。密钥通过 `API_KEYS` 环境变量配置，可以配置多个，用英文逗号分隔。程序只保存密钥的哈希值，并用恒定时间比较，避免时序攻击。
@@ -144,6 +182,8 @@ npm run backend:cli -- --server http://localhost:8787 --key demo-key-123 --case 
 | `PORT` | HTTP端口 | `8787` |
 | `RATE_LIMIT_PER_MINUTE` | 每个密钥每分钟请求上限 | `30` |
 | `DAILY_CONSULTATION_LIMIT` | 每个密钥每天新建问诊上限 | `200` |
+| `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` / `LANGFUSE_BASE_URL` | Langfuse 追踪，三个都设置才开启 | 无（关闭） |
+| `LANGFUSE_SELF_HOSTED` | 设为 `true` 表示这个地址是自托管的，不做全文隐藏 | 无 |
 
 ## 八、测试
 
@@ -151,7 +191,7 @@ npm run backend:cli -- --server http://localhost:8787 --key demo-key-123 --case 
 npm run backend:test
 ```
 
-测试全部离线运行，覆盖以下内容：规划器的选题顺序、去重和轮数上限；记录表只接受能对上患者原话的内容；危险分级规则与否定词；完整问诊不重复提问；危险情况立即结束；重启进程后可接着上次的进度继续；自查不通过时重写；接口的密钥校验、访问隔离、输入检查、限流和每日上限；Bedrock请求的格式，用本地模拟的Bedrock接口验证；以及模型调用失败后显示为失败、返回502、可以重试（`backend/tests/failed-state.test.ts`）。
+测试全部离线运行，覆盖以下内容：规划器的选题顺序、去重和轮数上限；记录表只接受能对上患者原话的内容；危险分级规则与否定词；完整问诊不重复提问；危险情况立即结束；重启进程后可接着上次的进度继续；自查不通过时重写；接口的密钥校验、访问隔离、输入检查、限流和每日上限；Bedrock请求的格式，用本地模拟的Bedrock接口验证；模型调用失败后显示为失败、返回502、可以重试（`backend/tests/failed-state.test.ts`）；以及开启追踪时每个节点都有 span、归到问诊编号对应的 session、手机号被隐藏（`backend/tests/tracing.test.ts`，用内存导出器代替 Langfuse 服务）。
 
 ## 九、已知限制
 

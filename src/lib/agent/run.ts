@@ -1,3 +1,4 @@
+import type { Callbacks } from "@langchain/core/callbacks/manager";
 import type { AgentLLM, UsageRecord } from "./llm";
 import {
   buildConsultationGraph,
@@ -27,6 +28,7 @@ const RECURSION_LIMIT = 60;
 export async function* runConsultation(
   deps: GraphDeps,
   transcript: Turn[],
+  opts: { callbacks?: Callbacks } = {},
 ): AsyncGenerator<AgentEvent> {
   const graph = buildConsultationGraph(deps);
   const started = Date.now();
@@ -38,7 +40,7 @@ export async function* runConsultation(
   try {
     const stream = await graph.stream(
       { transcript },
-      { streamMode: ["updates", "values"], recursionLimit: RECURSION_LIMIT },
+      { streamMode: ["updates", "values"], recursionLimit: RECURSION_LIMIT, callbacks: opts.callbacks },
     );
     for await (const [mode, chunk] of stream) {
       if (mode === "values") {

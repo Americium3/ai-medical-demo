@@ -2,6 +2,7 @@ import path from "node:path";
 import { SqliteSaver } from "@langchain/langgraph-checkpoint-sqlite";
 import { createBedrockLLM, type LLM } from "./llm";
 import { createMockLLM } from "./mock-llm";
+import { createTracing, tracingOptionsFromEnv, type Tracing, type TracingOptions } from "../../shared/tracing/langfuse";
 
 export interface Config {
   llm: "mock" | "bedrock";
@@ -14,6 +15,8 @@ export interface Config {
   apiKeys: string[];
   ratePerMinute: number;
   dailyConsultations: number;
+  /** Langfuse tracing; null unless LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_BASE_URL are set. */
+  tracing: TracingOptions | null;
 }
 
 export class ConfigError extends Error {}
@@ -36,6 +39,7 @@ export function loadConfig(env = process.env): Config {
     apiKeys: (env.API_KEYS ?? "").split(",").map((k) => k.trim()).filter(Boolean),
     ratePerMinute: Number(env.RATE_LIMIT_PER_MINUTE ?? 30),
     dailyConsultations: Number(env.DAILY_CONSULTATION_LIMIT ?? 200),
+    tracing: tracingOptionsFromEnv(env),
   };
   if (llm === "bedrock" && !cfg.credentials) {
     throw new ConfigError(
@@ -54,6 +58,16 @@ export function createLLM(cfg: Config): LLM {
         credentials: cfg.credentials,
       })
     : createMockLLM();
+}
+
+/** The Langfuse tracer, or undefined when tracing is off. */
+export function createTracer(cfg: Config): Tracing | undefined {
+  if (!cfg.tracing) return undefined;
+  const tracing = createTracing({ ...cfg.tracing, exportMode: "batched" });
+  console.log(
+    `（Langfuse 追踪已开启：${cfg.tracing.baseUrl}，${tracing.maskAllText ? "非自托管地址，全部文本已隐藏" : "自托管，仅隐藏手机号和身份证号"}）`,
+  );
+  return tracing;
 }
 
 export function createCheckpointer(dbPath: string): SqliteSaver {
