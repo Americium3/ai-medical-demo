@@ -1,9 +1,9 @@
 {
   "meta": {
-    "date": "2026-10-19T02:32:40.668Z",
+    "date": "2026-10-19T02:52:53.783Z",
     "mode": "rules",
     "label": "real-transcripts",
-    "cases": 81
+    "cases": 85
   },
   "results": [
     {
@@ -1076,6 +1076,60 @@
       "level": 4,
       "expectedLevel": 4,
       "outcome": "ok"
+    },
+    {
+      "id": "neg-r7",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-list"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-r8",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-list",
+        "denial-filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-r9",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rf-r4",
+      "kind": "redflag",
+      "tags": [
+        "denial-list"
+      ],
+      "expectedRule": "卒中征象",
+      "hits": [
+        "卒中征象"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
     }
   ]
 }

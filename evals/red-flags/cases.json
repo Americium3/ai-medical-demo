@@ -1152,5 +1152,65 @@
       "denial-filler",
       "denial-list"
     ]
+  },
+  {
+    "id": "neg-r7",
+    "kind": "denial",
+    "turns": [
+      "这次头痛不是突然发作的，也不是我这辈子最厉害的一次。我没有出现嘴歪、一边手脚没力气，或者说话不清楚的情况。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-list"
+    ]
+  },
+  {
+    "id": "neg-r8",
+    "kind": "denial",
+    "turns": [
+      "这次头痛不是突然发作，也不是这辈子最厉害的一次。我没有注意到嘴歪、一边手脚没力气，或者说话不清楚的情况。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-list",
+      "denial-filler"
+    ]
+  },
+  {
+    "id": "neg-r9",
+    "kind": "denial",
+    "turns": [
+      "有点胸闷，深呼吸的时候右边有点疼。不过还没有到喘不上气、呼吸困难的程度。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-filler"
+    ]
+  },
+  {
+    "id": "rf-r4",
+    "kind": "redflag",
+    "turns": [
+      "头痛得厉害，或者说话不清楚"
+    ],
+    "expect": {
+      "rule": "卒中征象",
+      "level": 2
+    },
+    "tags": [
+      "denial-list"
+    ]
   }
 ]

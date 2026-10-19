@@ -13,8 +13,9 @@
  *      filler from a fixed list in between: 否认有明显的呼吸困难, 没有特别觉得喘不上气
  *      and 没注意到吐血 are denials, 不时呼吸困难 is not.
  *   4. A strong denial (没有/没/无/未/否认, not 不) also covers the later items
- *      of a short list: 没有喘不上气、呼吸困难 and 没有感觉喘不上气或者呼吸困难
- *      deny both. 不想吃饭和呼吸困难 does not deny the second item.
+ *      of a short list: 没有喘不上气、呼吸困难, 没有感觉喘不上气或者呼吸困难 and
+ *      没有出现嘴歪、一边手脚没力气，或者说话不清楚 deny every item.
+ *      不想吃饭和呼吸困难 does not deny the second item.
  * Callers match each patient turn separately, so a "没" answering the previous
  * question never negates the next turn.
  */
@@ -31,15 +32,18 @@ export interface RuleMatch<L> {
   quote: string;
 }
 
-/** Ends a clause: punctuation except the list comma 、, a line break, or a contrast word. */
-const CLAUSE_BREAK = /[，。,.!！?？；;：:\n]|但是|但|可是|不过|却/g;
+/**
+ * Ends a clause: punctuation except the list comma 、 (and a comma that only
+ * leads into 或者/或), a line break, or a contrast word.
+ */
+const CLAUSE_BREAK = /[，,](?!\s*或)|[。.!！?？；;：:\n]|但是|但|可是|不过|却/g;
 
 /** Contain a negation character but do not deny anything. Longest first. */
 const NON_NEGATING = /不知不觉|无缘无故|毫无征兆|没完没了|止不住|不知道|不舒服|受不了|是不是|不时|不停|不断|不止|无力/g;
 
-const FILLER = "(?:有|出现|感到|觉得|感觉|出|明显的?|什么|特别|太|注意到|发现){0,3}";
+const FILLER = "(?:有|出现|感到|觉得|感觉|出|到|明显的?|什么|特别|太|注意到|发现){0,3}";
 /** Earlier items of a list, each ending in a list word: 喘不上气、 / 喘不上气或者 */
-const LIST_ITEMS = "(?:[^，。,.!！?？；;：:\\n]{1,8}?(?:、|或者|或是|或|和|以及|及))*";
+const LIST_ITEMS = "(?:[^，。,.!！?？；;：:\\n]{1,8}?(?:、|[，,]?\\s*(?:或者|或是|或)|和|以及|及))*";
 
 /**
  * A denial cue, then optional filler words, then the end of the prefix (= the symptom);
