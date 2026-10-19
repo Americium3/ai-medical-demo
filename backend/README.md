@@ -1,17 +1,20 @@
 # 问诊Agent后端演示
 
-本目录是问诊Agent的后端演示，使用LangGraph编排问诊流程，模型通过AWS Bedrock调用。演示以命令行方式运行，也可以作为HTTP服务启动。
+本目录是问诊Agent的后端，也是仓库里唯一的一套问诊Agent实现（#13）：Next.js 的 `/agent` 页面通过 `/api/agent` 转发到这里（设置 `BACKEND_URL` 和 `BACKEND_API_KEY`）。使用LangGraph编排问诊流程，模型通过AWS Bedrock调用。可以命令行运行，也可以作为HTTP服务启动。
 
 ## 一、与设计文档的对应关系
 
+设计文档在 [`docs/agent/DESIGN.md`](../docs/agent/DESIGN.md)，代码注释里的「DESIGN.md §x」都指向它。
+
 | 设计文档 | 实现位置 |
 |---|---|
-| 第三部分 危险分级（四级） | `src/triage.ts`：规则只能把等级调得更紧急，不能调低 |
-| 第七部分 问诊模板 | `src/templates.ts`：通用要点加胸痛、腹痛、头痛、咳嗽发热四类模板 |
-| 第七部分 问诊记录表、选题规则、停止条件 | `src/record.ts`、`src/planner.ts` |
-| 第八部分 会话记忆与防重复追问 | `src/graph.ts` 中的 `wait` 节点暂停问诊，状态按问诊编号保存在SQLite（单机）或PostgreSQL（部署）中；`src/planner.ts` 的三层去重 |
-| 第九部分 接口与安全 | `src/server.ts`、`src/security.ts` |
-| 第十二部分 成本控制 | 追问轮数和自查次数有上限；`src/llm.ts` 按步骤选用快、慢两档模型；每个接口密钥有每日问诊上限 |
+| §3.3 危险分级（四级） | `../shared/safety/red-flags.ts`（唯一的规则表）、`src/triage.ts`：规则只能把等级调得更紧急，不能调低 |
+| §6 问诊流程 | `src/graph.ts` |
+| §7.1 问诊模板 | `src/templates.ts`：通用要点加胸痛、腹痛、头痛、咳嗽发热四类模板 |
+| §7.2–§7.4 问诊记录表、选题规则、停止条件 | `src/record.ts`、`src/planner.ts` |
+| §8 会话记忆与防重复追问 | `src/graph.ts` 中的 `wait` 节点暂停问诊，状态按问诊编号保存在SQLite（单机）或PostgreSQL（部署）中；`src/planner.ts` 的三层去重 |
+| §9 接口与安全 | `src/server.ts`、`src/security.ts`、`src/lock.ts` |
+| §12 成本控制 | 追问轮数和自查次数有上限；`src/llm.ts` 按步骤选用快、慢两档模型；每个接口密钥有每日问诊上限 |
 
 问诊流程如下：
 
@@ -103,7 +106,20 @@ npm run backend:cli -- --case cardio-001
 
 密钥使用单独的变量名，避免误用运行环境中已有的其他AWS凭证。不设置这两个变量时，程序使用AWS SDK的默认凭证链：在ECS上就是任务的IAM角色，不需要任何访问密钥。如需更换区域或模型，可设置 `BEDROCK_REGION`、`BEDROCK_FAST_MODEL_ID`、`BEDROCK_SMART_MODEL_ID`。
 
-说明：Claude Opus 5.5、Sonnet 5.5等新模型不支持强制指定工具，也不接受自定义temperature。因此程序以“自动选择”方式提供工具，不发送temperature，并在程序中校验模型返回的结果。该写法已用本地模拟的Bedrock接口测试过，尚未连接真实的AWS账号测试。
+说明：Claude Opus 5.5、Sonnet 5.5等新模型不支持强制指定工具，也不接受自定义temperature。因此程序以“自动选择”方式提供工具，不发送temperature，并在程序中校验模型返回的结果。该写法有本地模拟Bedrock接口的测试。
+
+### 真实Bedrock的测试情况
+
+- PR #2：在本地对真实的Bedrock模型（us-east-2，Haiku 4.5 + Sonnet 4.6）回放一段真实的患者对话，完整跑了10次，10次都生成了病历。
+- 之后阶段一和阶段二的改动（规则前置、并行改写、指南检索、失败重试等）只在离线替身和本地模拟的Bedrock接口上验证过，还没有在真实Bedrock上重跑。延迟、成本和引用准确率的真实数字待运行：需要密钥。
+
+### 默认模型
+
+默认仍是快档 Claude Haiku 4.5、慢档 Claude Sonnet 4.6，这是有意保留的：
+
+- 只有这两个模型在真实Bedrock上跑过（上面的10次）。换模型前需要用 `scripts/eval-backend.ts` 和 `scripts/eval-red-flags.ts --model` 在真实Bedrock上对比，这个环境没有密钥。
+- 新一代更便宜（标价每百万tokens：Haiku 5.5 输入 $0.1 / 输出 $0.5，Haiku 4.5 为 $1 / $5；Sonnet 5.5 为 $2 / $10，Sonnet 4.6 为 $3 / $15），Haiku 5.5 的提示缓存门槛也低（512 tokens，Haiku 4.5 要 4096），但行为有变化：Haiku 5.5 默认开启思考（每次调用可能更慢），Sonnet 5.5 不接受强制指定工具。程序已经按「自动选择工具、不发temperature」写好，换模型只需设置 `BEDROCK_FAST_MODEL_ID` / `BEDROCK_SMART_MODEL_ID`，但效果和延迟要先测。
+- 结论：等真实Bedrock评测跑完再决定是否升级；评测命令见上面的「每轮延迟和成本」。Bedrock的计费以AWS价格页为准。
 
 ## 五、启动HTTP服务
 
@@ -248,7 +264,7 @@ PostgreSQL 和 Redis 的集成测试不在上面的测试里，需要两个服�
 
 ## 九、已知限制
 
-1. 尚未连接真实的AWS Bedrock测试。
+1. 真实Bedrock只在PR #2时跑过10次完整问诊，之后的改动还没在真实Bedrock上重跑（见「真实Bedrock的测试情况」）。
 2. 离线替身模型的判断很粗糙，只用于演示流程。
 3. 不设置 `DATABASE_URL` 和 `REDIS_URL` 时，状态存在SQLite里，限流计数和问诊锁存在内存里，只适合单个实例。
 4. 规划器的停止条件做了简化：必填项和鉴别要点都有结果、或达到轮数上限即停止，暂未判断“可能诊断是否连续两轮不变”。

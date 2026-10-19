@@ -1,7 +1,7 @@
 /**
- * Minimal API security for the demo (design doc §9): bearer API keys,
+ * Minimal API security for the demo (DESIGN.md §9): bearer API keys,
  * per-key rate limiting and a per-key daily consultation cap (a cost
- * control, design doc §12.7). Full sign-in comes later.
+ * control, DESIGN.md §12.7). Full sign-in comes later.
  */
 import { createHash, timingSafeEqual } from "node:crypto";
 import { RATE_SCRIPT, type RedisLike } from "./redis";

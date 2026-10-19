@@ -1,7 +1,7 @@
 import { isGroundedQuote, normalize } from "../../shared/safety/grounding";
 
 /**
- * The consultation record table (design doc §7.2, §8.2): one entry per
+ * The consultation record table (DESIGN.md §7.2, §8.2): one entry per
  * template slot, saved with the graph state after every step. It is the
  * agent's memory of what has been asked and answered.
  */

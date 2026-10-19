@@ -1,13 +1,14 @@
 /**
  * Danger-signal evaluation over evals/red-flags/cases.json (issue #8, shared with #4).
  *
- *   npx tsx scripts/eval-red-flags.ts --rules [--label baseline]   # deterministic, offline, both agents
+ *   npx tsx scripts/eval-red-flags.ts --rules [--label baseline]   # deterministic, offline
  *   npx tsx scripts/eval-red-flags.ts --model --mock                 # backend triage, offline mock (harness check)
  *   BEDROCK_ACCESS_KEY_ID=... BEDROCK_SECRET_ACCESS_KEY=... npx tsx scripts/eval-red-flags.ts --model
  *
- * --rules  runs each agent's rule matcher over the patient turns and reports
- *          recall on red flags its rule table covers, false positives on
- *          explicit denials and routine complaints, and coverage gaps.
+ * --rules  runs the rule matcher (the one table in shared/safety/red-flags.ts)
+ *          over the patient turns and reports recall on red flags the table
+ *          covers, false positives on explicit denials and routine
+ *          complaints, and coverage gaps.
  * --model  runs the backend triage step (Bedrock fast model + rules), as the
  *          graph does on the latest patient turn, and records level agreement,
  *          recall, false positives, calls, tokens and latency.
@@ -16,9 +17,7 @@
  */
 import { parseArgs } from "node:util";
 import { RED_FLAG_CASES, type RedFlagCase } from "../evals/red-flags/cases";
-import { matchPatientTurns as matchSrc, maxLevel } from "../src/lib/agent/red-flags";
-import type { RiskLevel } from "../src/lib/agent/schemas";
-import { matchPatientTurns as matchBackend, mostUrgent, type Level } from "../backend/src/triage";
+import { matchPatientTurns, mostUrgent, type Level } from "../backend/src/triage";
 import { loadConfig, createLLM } from "../backend/src/config";
 import { createMockLLM } from "../backend/src/mock-llm";
 import type { LLM } from "../backend/src/llm";
@@ -57,66 +56,57 @@ interface RuleResult {
   id: string;
   kind: RedFlagCase["kind"];
   tags: string[];
-  impl: "src" | "backend";
   expectedRule: string | null;
   hits: string[];
-  level: string;
-  expectedLevel: string;
+  level: Level;
+  expectedLevel: Level;
   /** covered red flag: the expected rule fired. denial/routine: nothing fired. gap: nothing to score. */
   outcome: "hit" | "miss" | "ok" | "false_positive" | "gap_fired" | "gap_silent";
 }
 
-function scoreRules(c: RedFlagCase, impl: "src" | "backend"): RuleResult {
-  const hits = impl === "src" ? matchSrc(c.turns) : matchBackend(c.turns);
-  const level =
-    impl === "src"
-      ? maxLevel(...hits.map((h) => h.level as RiskLevel))
-      : String(mostUrgent(...hits.map((h) => h.level as Level)));
-  const expectedRule = impl === "src" ? c.expect.srcRule : c.expect.backendRule;
-  const expectedLevel = String(impl === "src" ? c.expect.srcLevel : c.expect.backendLevel);
+function scoreRules(c: RedFlagCase): RuleResult {
+  const hits = matchPatientTurns(c.turns);
   const names = hits.map((h) => h.rule);
   let outcome: RuleResult["outcome"];
   if (c.kind === "redflag") {
-    if (expectedRule === null) outcome = names.length ? "gap_fired" : "gap_silent";
-    else outcome = names.includes(expectedRule) ? "hit" : "miss";
+    if (c.expect.rule === null) outcome = names.length ? "gap_fired" : "gap_silent";
+    else outcome = names.includes(c.expect.rule) ? "hit" : "miss";
   } else {
     outcome = names.length ? "false_positive" : "ok";
   }
-  return { id: c.id, kind: c.kind, tags: c.tags, impl, expectedRule, hits: names, level, expectedLevel, outcome };
+  return {
+    id: c.id, kind: c.kind, tags: c.tags, expectedRule: c.expect.rule, hits: names,
+    level: mostUrgent(...hits.map((h) => h.level)), expectedLevel: c.expect.level, outcome,
+  };
 }
 
 function rulesSummary(results: RuleResult[]): string {
   const lines: string[] = [];
-  lines.push("| 实现 | 危险信号召回（规则覆盖的） | 等级一致 | 明确否认误报 | 普通主诉误报 | 覆盖缺口（不计入召回） |");
-  lines.push("|---|---|---|---|---|---|");
-  for (const impl of ["src", "backend"] as const) {
-    const rs = results.filter((r) => r.impl === impl);
-    const covered = rs.filter((r) => r.outcome === "hit" || r.outcome === "miss");
-    const hit = covered.filter((r) => r.outcome === "hit");
-    const levelOk = covered.filter((r) => r.level === r.expectedLevel);
-    const denials = rs.filter((r) => r.kind === "denial");
-    const routine = rs.filter((r) => r.kind === "routine");
-    const gaps = rs.filter((r) => r.outcome.startsWith("gap"));
-    lines.push(
-      `| ${impl === "src" ? "src（Next）" : "backend（Bedrock）"} | **${pct(hit.length, covered.length)}** (${hit.length}/${covered.length}) | ${pct(levelOk.length, covered.length)} | ${pct(denials.filter((r) => r.outcome === "false_positive").length, denials.length)} (${denials.filter((r) => r.outcome === "false_positive").length}/${denials.length}) | ${pct(routine.filter((r) => r.outcome === "false_positive").length, routine.length)} (${routine.filter((r) => r.outcome === "false_positive").length}/${routine.length}) | ${gaps.length} 条：${gaps.map((g) => g.id).join(", ") || "无"} |`,
-    );
-  }
+  const covered = results.filter((r) => r.outcome === "hit" || r.outcome === "miss");
+  const hit = covered.filter((r) => r.outcome === "hit");
+  const levelOk = covered.filter((r) => r.level === r.expectedLevel);
+  const denials = results.filter((r) => r.kind === "denial");
+  const routine = results.filter((r) => r.kind === "routine");
+  const gaps = results.filter((r) => r.outcome.startsWith("gap"));
+  const fp = (rs: RuleResult[]) => rs.filter((r) => r.outcome === "false_positive").length;
+  lines.push("| 危险信号召回（规则覆盖的） | 等级一致 | 明确否认误报 | 普通主诉误报 | 覆盖缺口（不计入召回） |");
+  lines.push("|---|---|---|---|---|");
+  lines.push(
+    `| **${pct(hit.length, covered.length)}** (${hit.length}/${covered.length}) | ${pct(levelOk.length, covered.length)} | ${pct(fp(denials), denials.length)} (${fp(denials)}/${denials.length}) | ${pct(fp(routine), routine.length)} (${fp(routine)}/${routine.length}) | ${gaps.length} 条：${gaps.map((g) => g.id).join(", ") || "无"} |`,
+  );
 
   lines.push("", "按标签（危险信号召回 / 否认误报）：", "");
   const tags = [...new Set(results.flatMap((r) => r.tags))].sort();
-  lines.push("| 标签 | src | backend |");
-  lines.push("|---|---|---|");
+  lines.push("| 标签 | 结果 |");
+  lines.push("|---|---|");
   for (const tag of tags) {
-    const cell = (impl: "src" | "backend") => {
-      const rs = results.filter((r) => r.impl === impl && r.tags.includes(tag));
-      const covered = rs.filter((r) => r.outcome === "hit" || r.outcome === "miss");
-      const neg = rs.filter((r) => r.kind !== "redflag");
-      const parts: string[] = [];
-      if (covered.length) parts.push(`召回 ${covered.filter((r) => r.outcome === "hit").length}/${covered.length}`);
-      if (neg.length) parts.push(`误报 ${neg.filter((r) => r.outcome === "false_positive").length}/${neg.length}`);
-      return parts.join("，") || "—";
-    };
-    lines.push(`| ${tag} | ${cell("src")} | ${cell("backend")} |`);
+    const rs = results.filter((r) => r.tags.includes(tag));
+    const cov = rs.filter((r) => r.outcome === "hit" || r.outcome === "miss");
+    const neg = rs.filter((r) => r.kind !== "redflag");
+    const parts: string[] = [];
+    if (cov.length) parts.push(`召回 ${cov.filter((r) => r.outcome === "hit").length}/${cov.length}`);
+    if (neg.length) parts.push(`误报 ${fp(neg)}/${neg.length}`);
+    lines.push(`| ${tag} | ${parts.join("，") || "—"} |`);
   }
 
   const bad = results.filter((r) => r.outcome === "miss" || r.outcome === "false_positive");
@@ -124,18 +114,16 @@ function rulesSummary(results: RuleResult[]): string {
   if (!bad.length) lines.push("- 无");
   for (const r of bad) {
     const c = cases.find((x) => x.id === r.id)!;
-    lines.push(
-      `- ${r.impl} ${r.id} ${r.outcome === "miss" ? "漏报" : "误报"}：「${c.turns.join(" / ")}」 期望 ${r.expectedRule ?? "不触发"}，实际 ${r.hits.join("、") || "无"}`,
-    );
+    lines.push(`- ${r.id} ${r.outcome === "miss" ? "漏报" : "误报"}：「${c.turns.join(" / ")}」 期望 ${r.expectedRule ?? "不触发"}，实际 ${r.hits.join("、") || "无"}`);
   }
   return lines.join("\n");
 }
 
 function runRules() {
-  const results = cases.flatMap((c) => [scoreRules(c, "src"), scoreRules(c, "backend")]);
+  const results = cases.map(scoreRules);
   const tag = `rules-${args.label ? `${args.label}-` : ""}${stamp}`;
   const meta = { date: new Date().toISOString(), mode: "rules", label: args.label ?? null, cases: cases.length };
-  const summary = `# 危险信号评测 ${tag}\n\n- 模式：规则（确定性，离线）\n- 用例：${cases.length} 条（${cases.filter((c) => c.kind === "redflag").length} 危险信号 / ${cases.filter((c) => c.kind === "denial").length} 明确否认 / ${cases.filter((c) => c.kind === "routine").length} 普通主诉）\n\n${rulesSummary(results)}\n`;
+  const summary = `# 危险信号评测 ${tag}\n\n- 模式：规则（确定性，离线；shared/safety/red-flags.ts 里唯一的一张规则表）\n- 用例：${cases.length} 条（${cases.filter((c) => c.kind === "redflag").length} 危险信号 / ${cases.filter((c) => c.kind === "denial").length} 明确否认 / ${cases.filter((c) => c.kind === "routine").length} 普通主诉）\n\n${rulesSummary(results)}\n`;
   const files = writeEvalOutput({ dir: args.out!, tag, prefix: "redflags-", meta, results, summary });
   console.log(`${summary}\nwrote ${files.json} and ${files.md}`);
 }
@@ -157,27 +145,17 @@ interface ModelResult {
   error?: string;
 }
 
-/**
- * Level the backend should reach on this case. Where the backend has no rule for
- * the symptom, the expected level is still the clinical one (taken from the src
- * table), so a model that answers "4" on a fainting patient is a miss, not a match.
- */
-function clinicalBackendLevel(c: RedFlagCase): Level {
-  if (c.kind !== "redflag" || c.expect.backendRule !== null) return c.expect.backendLevel;
-  return c.expect.srcLevel === "emergency" ? 2 : c.expect.srcLevel === "urgent" ? 3 : 4;
-}
-
 async function triageCase(llm: LLM, c: RedFlagCase): Promise<ModelResult> {
   const before = llm.usage.length;
   const template = chooseTemplate(c.turns[0]);
   const record = emptyRecord(slotsFor(template).map((s) => s.id));
   const latest = c.turns.at(-1)!;
-  const base = { id: c.id, kind: c.kind, tags: c.tags, expectedLevel: clinicalBackendLevel(c) };
+  const base = { id: c.id, kind: c.kind, tags: c.tags, expectedLevel: c.expect.level };
   const started = Date.now();
   try {
     // Same inputs and combination as the graph's triage node.
     const out = await llm.invoke({ task: "triage", schema: triageSchema, ...triagePrompt(template, record, latest), context: { text: latest } });
-    const hits = matchBackend(c.turns);
+    const hits = matchPatientTurns(c.turns);
     const used = llm.usage.slice(before);
     return {
       ...base,

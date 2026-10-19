@@ -1,5 +1,5 @@
 /**
- * The question planner (design doc §7.3–7.4). Deterministic on purpose: given
+ * The question planner (DESIGN.md §7.3–7.4). Deterministic on purpose: given
  * the record table and what has already been asked, it decides which slots to
  * ask about next and when to stop. The language model only rephrases the
  * chosen questions; it never decides what to ask.

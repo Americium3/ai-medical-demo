@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /** One line of the consultation, as the agent sees it. */
-export type Turn = { role: "patient" | "agent"; content: string };
+export type { Turn } from "@/lib/sim/patient";
 
 export const FACT_CATEGORIES = [
   "chief_complaint",
@@ -151,7 +151,4 @@ export type SelfCheckIssue = SelfCheckOutput["issues"][number] | {
 
 // ---- simulated patient --------------------------------------------------
 
-export const patientOutputSchema = z.object({
-  answer: z.string().describe("患者的口语化回答"),
-});
-export type PatientOutput = z.infer<typeof patientOutputSchema>;
+export { patientOutputSchema } from "@/lib/sim/patient";

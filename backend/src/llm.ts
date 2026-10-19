@@ -11,7 +11,7 @@ import { z } from "zod";
 
 export type Task = "extract" | "triage" | "phrase" | "note" | "review";
 
-/** Which model tier a task uses (design doc §12.4, mixed plan). */
+/** Which model tier a task uses (DESIGN.md §12.4, mixed plan). */
 export const TASK_TIER: Record<Task, "fast" | "smart"> = {
   extract: "fast",
   triage: "fast",

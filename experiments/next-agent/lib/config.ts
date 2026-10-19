@@ -1,5 +1,5 @@
 import { getModelById, DEFAULT_MODEL_ID } from "@/data/models";
-import { createGatewayLLM, type AgentLLM } from "./llm";
+import { createGatewayLLM, type AgentLLM } from "@/lib/sim/gateway";
 import { createMockLLM } from "./mock-llm";
 
 export class AgentConfigError extends Error {}

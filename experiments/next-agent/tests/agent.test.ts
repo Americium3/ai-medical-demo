@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { MEDICAL_CASES } from "@/data/cases";
-import { groundFacts } from "@/lib/agent/grounding";
-import { matchRedFlagRules } from "@/lib/agent/red-flags";
-import { createMockLLM } from "@/lib/agent/mock-llm";
-import { createScriptedPatient, openingLine } from "@/lib/agent/patient";
-import { runToCompletion, type AgentEvent } from "@/lib/agent/run";
-import { MAX_ASK_ROUNDS, MAX_REVISIONS } from "@/lib/agent/graph";
-import { AgentLLMError, createGatewayLLM } from "@/lib/agent/llm";
-import { intakeOutputSchema, type DifferentialOutput, type Turn } from "@/lib/agent/schemas";
+import { groundFacts } from "../lib/grounding";
+import { matchRedFlagRules } from "../lib/red-flags";
+import { createMockLLM } from "../lib/mock-llm";
+import { createScriptedPatient, openingLine } from "@/lib/sim/patient";
+import { runToCompletion, type AgentEvent } from "../lib/run";
+import { MAX_ASK_ROUNDS, MAX_REVISIONS } from "../lib/graph";
+import { AgentLLMError, createGatewayLLM } from "@/lib/sim/gateway";
+import { intakeOutputSchema, type DifferentialOutput, type Turn } from "../lib/schemas";
 
 const nodes = (events: AgentEvent[]) =>
   events.flatMap((e) => (e.type === "node" ? [e.node] : []));
@@ -249,7 +249,7 @@ test("createGatewayLLM sends a forced tool call and parses the structured reply"
 
 test("chest pain with sweating is an emergency even with words in between", () => {
   const hits = matchRedFlagRules("我胸口痛了一个小时，一直出大汗");
-  assert.equal(hits[0]?.rule, "胸痛伴大汗/持续不缓解");
+  assert.equal(hits[0]?.rule, "胸痛伴大汗或持续不缓解");
 });
 
 test("scripted patient ignores filler words when matching questions", async () => {

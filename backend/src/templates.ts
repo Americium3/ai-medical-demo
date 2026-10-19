@@ -1,5 +1,5 @@
 /**
- * History-taking templates (design doc §7.1).
+ * History-taking templates (DESIGN.md §7.1).
  *
  * Every consultation uses the general symptom points (onset, character,
  * triggers, associated symptoms, history...) plus the points of the template

@@ -1,142 +1,132 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { ModelSelector } from "@/components/ModelSelector";
 import { MEDICAL_CASES, getCaseById } from "@/data/cases";
-import { DEFAULT_MODEL_ID } from "@/data/models";
-import type { ConsultationStateT } from "@/lib/agent/graph";
-import type { AgentEvent } from "@/lib/agent/run";
-import type { Turn } from "@/lib/agent/schemas";
-import { NODE_INFO, summarizeUpdate } from "@/lib/agent/trace";
-import { readSSEJson } from "@/lib/sse";
+import type { ConsultationView } from "../../../backend/src/service";
 
-type NodeEvent = Extract<AgentEvent, { type: "node" }>;
+type Turn = { role: "patient" | "agent"; content: string };
 
 interface Run {
   id: number;
-  events: NodeEvent[];
+  label: string;
   status: "running" | "done" | "error";
-  error?: string;
+  steps: ConsultationView["trace"];
   ms?: number;
-  calls?: number;
-  tokens?: number;
+  error?: string;
 }
 
-interface Scores {
-  accuracy: number;
-  completeness: number;
-  standardization: number;
-  recommendation: number;
-  comments: string;
-}
+const MAX_AUTO_ROUNDS = 8;
 
-const MAX_AUTO_ROUNDS = 6;
+/** The backend's graph, in order (docs/agent/DESIGN.md §6). */
+const NODES: { id: string; label: string }[] = [
+  { id: "screen", label: "规则筛查" },
+  { id: "understand", label: "更新记录表" },
+  { id: "triage", label: "危险分级" },
+  { id: "phrase", label: "改写追问" },
+  { id: "ask", label: "追问" },
+  { id: "retrieve", label: "检索指南" },
+  { id: "draft", label: "写病历" },
+  { id: "check", label: "自查" },
+  { id: "finalize", label: "完成" },
+];
+
+/** Labels for trace steps, including the nodes the map leaves out. */
+const LABEL: Record<string, string> = {
+  ...Object.fromEntries(NODES.map((n) => [n.id, n.label])),
+  setup: "选模板",
+  wait: "收到回答",
+  emergency: "急诊提示",
+};
+
+const STATUS_TEXT: Record<string, string> = { answered: "已回答", unknown: "不清楚", unasked: "未问" };
 
 function openingFor(caseId: string): string {
-  const c = getCaseById(caseId)!;
-  return `医生您好，我${c.chiefComplaint}。`;
+  return `医生您好，我${getCaseById(caseId)!.chiefComplaint}。`;
+}
+
+/** The backend joins a round's questions with spaces; the simulated patient wants them one by one. */
+function splitQuestions(q: string): string[] {
+  return q.split(/(?<=[？?])\s*/).filter(Boolean);
 }
 
 export function AgentClient() {
-  const [modelId, setModelId] = useState(DEFAULT_MODEL_ID);
   const [caseId, setCaseId] = useState<string | null>(null);
   const [transcript, setTranscript] = useState<Turn[]>([]);
-  const [input, setInput] = useState("");
+  const [view, setView] = useState<ConsultationView | null>(null);
   const [runs, setRuns] = useState<Run[]>([]);
-  const [finalState, setFinalState] = useState<ConsultationStateT | null>(null);
-  const [llmKind, setLlmKind] = useState<"mock" | "gateway" | null>(null);
-  const [busy, setBusy] = useState<"agent" | "patient" | "auto" | "score" | null>(null);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState<"agent" | "patient" | "auto" | null>(null);
   const [error, setError] = useState("");
-  const [scores, setScores] = useState<Scores | null>(null);
-  const [scoreError, setScoreError] = useState("");
 
   const chatEnd = useRef<HTMLDivElement>(null);
   const traceEnd = useRef<HTMLDivElement>(null);
+  useEffect(() => chatEnd.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), [transcript]);
+  useEffect(() => traceEnd.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), [runs]);
 
-  useEffect(() => {
-    chatEnd.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [transcript]);
-  useEffect(() => {
-    traceEnd.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [runs]);
-
-  const status = finalState?.status;
-  const finished = status === "complete" || status === "emergency";
-  const awaiting = status === "awaiting_patient";
+  const status = view?.status;
+  const finished = status === "completed" || status === "emergency";
+  const awaiting = status === "awaiting_answer";
 
   function reset(nextCaseId: string | null) {
     setCaseId(nextCaseId);
-    setTranscript(nextCaseId ? [{ role: "patient", content: openingFor(nextCaseId) }] : []);
+    setTranscript([]);
+    setView(null);
     setRuns([]);
-    setFinalState(null);
     setError("");
-    setScores(null);
-    setScoreError("");
+    setInput(nextCaseId ? openingFor(nextCaseId) : "");
   }
 
-  /** One request to /api/agent. Streams node events into the trace. */
-  async function runTurn(t: Turn[]): Promise<ConsultationStateT | null> {
+  /** One call through /api/agent. Returns the new view, or null on failure. */
+  async function call(label: string, body: Record<string, string>): Promise<ConsultationView | null> {
     const runId = Date.now();
-    setRuns((prev) => [...prev, { id: runId, events: [], status: "running" }]);
+    const started = performance.now();
+    setRuns((prev) => [...prev, { id: runId, label, status: "running", steps: [] }]);
     setError("");
-    const patchRun = (patch: Partial<Run> | ((r: Run) => Partial<Run>)) =>
-      setRuns((prev) =>
-        prev.map((r) => (r.id === runId ? { ...r, ...(typeof patch === "function" ? patch(r) : patch) } : r)),
-      );
-
+    const patch = (p: Partial<Run>) => setRuns((prev) => prev.map((r) => (r.id === runId ? { ...r, ...p } : r)));
     try {
-      const res = await fetch("/api/agent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transcript: t, model: modelId }),
-      });
-      if (!res.ok || !res.body) {
-        const detail = await res.json().catch(() => null);
-        throw new Error(detail?.error || `HTTP ${res.status}`);
-      }
-
-      const box: { state: ConsultationStateT | null } = { state: null };
-      await readSSEJson<AgentEvent>(res.body, (e) => {
-        if (e.type === "start") setLlmKind(e.llm);
-        else if (e.type === "node") patchRun((r) => ({ events: [...r.events, e] }));
-        else if (e.type === "done") {
-          box.state = e.state;
-          patchRun({
-            status: "done",
-            ms: e.ms,
-            calls: e.usage.length,
-            tokens: e.usage.reduce((n, u) => n + u.inputTokens + u.outputTokens, 0),
-          });
-        } else if (e.type === "error") {
-          throw new Error(e.message);
+      const res = await fetch("/api/agent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (!res.ok) {
+        // A model failure is saved on the backend as "failed"; show it so the user can retry.
+        if (res.status === 502 && data?.retryable && data.id) {
+          const got = await fetch(`/api/agent?id=${data.id}`).then((r) => r.json());
+          setView(got);
         }
-      });
-      const s = box.state;
-      if (!s) throw new Error("没有收到最终状态");
-      setFinalState(s);
-      setTranscript(s.transcript);
-      return s;
+        throw new Error(data?.error || `HTTP ${res.status}`);
+      }
+      const v = data as ConsultationView;
+      patch({ status: "done", steps: v.trace, ms: performance.now() - started });
+      setView(v);
+      if (v.question) setTranscript((t) => [...t, { role: "agent", content: v.question! }]);
+      return v;
     } catch (err) {
       const message = err instanceof Error ? err.message : "请求失败";
-      patchRun({ status: "error", error: message });
+      patch({ status: "error", error: message, ms: performance.now() - started });
       setError(message);
       return null;
     }
   }
 
-  async function simulatedAnswer(s: ConsultationStateT): Promise<string | null> {
+  async function say(text: string, current: ConsultationView | null): Promise<ConsultationView | null> {
+    setTranscript((t) => [...t, { role: "patient", content: text }]);
+    return current ? call("回答", { action: "answer", id: current.id, text }) : call("开始问诊", { action: "start", complaint: text });
+  }
+
+  async function send(content: string) {
+    const text = content.trim();
+    if (!text || busy || finished) return;
+    setInput("");
+    setBusy("agent");
+    await say(text, view);
+    setBusy(null);
+  }
+
+  async function simulatedAnswer(v: ConsultationView, t: Turn[]): Promise<string | null> {
     try {
       const res = await fetch("/api/agent/patient", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          caseId,
-          transcript: s.transcript,
-          questions: s.pendingQuestions,
-          model: modelId,
-        }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ caseId, transcript: t, questions: splitQuestions(v.question ?? "") }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
@@ -147,101 +137,53 @@ export function AgentClient() {
     }
   }
 
-  async function send(content: string) {
-    const text = content.trim();
-    if (!text || busy) return;
-    const next: Turn[] = [...transcript, { role: "patient", content: text }];
-    setTranscript(next);
-    setInput("");
-    setScores(null);
-    setBusy("agent");
-    await runTurn(next);
-    setBusy(null);
-  }
-
-  async function start() {
-    if (busy || transcript.length === 0) return;
-    setBusy("agent");
-    await runTurn(transcript);
-    setBusy(null);
-  }
-
   async function answerWithSimulatedPatient() {
-    if (!finalState || busy) return;
+    if (!view || !awaiting || busy) return;
     setBusy("patient");
-    const answer = await simulatedAnswer(finalState);
+    const answer = await simulatedAnswer(view, transcript);
+    if (answer) await say(answer, view);
     setBusy(null);
-    if (answer) await send(answer);
   }
 
-  /** Let the agent and the simulated patient talk until the agent finishes. */
+  /** Let the backend and the simulated patient talk until the consultation ends. */
   async function autoRun() {
     if (busy || !caseId) return;
     setBusy("auto");
-    let t = transcript.at(-1)?.role === "patient" ? transcript : [{ role: "patient" as const, content: openingFor(caseId) }];
-    for (let i = 0; i < MAX_AUTO_ROUNDS; i++) {
-      const s = await runTurn(t);
-      if (!s || s.status !== "awaiting_patient") break;
-      const answer = await simulatedAnswer(s);
+    const opening = openingFor(caseId);
+    let t: Turn[] = view ? transcript : [{ role: "patient", content: opening }];
+    let v = view ?? (await say(opening, null));
+    for (let i = 0; v?.status === "awaiting_answer" && i < MAX_AUTO_ROUNDS; i++) {
+      t = [...t, { role: "agent", content: v.question! }];
+      const answer = await simulatedAnswer(v, t);
       if (!answer) break;
-      t = [...s.transcript, { role: "patient", content: answer }];
-      setTranscript(t);
+      t = [...t, { role: "patient", content: answer }];
+      v = await say(answer, v);
     }
+    setInput("");
     setBusy(null);
   }
 
-  async function score() {
-    const c = caseId ? getCaseById(caseId) : null;
-    if (!c || !finalState?.report || busy) return;
-    setBusy("score");
-    setScoreError("");
-    try {
-      const res = await fetch("/api/score", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          aiResponse: finalState.report,
-          expectedDiagnosis: c.expectedDiagnosis,
-          chiefComplaint: c.chiefComplaint,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-      setScores(data);
-    } catch (err) {
-      setScoreError(err instanceof Error ? err.message : "评分失败");
-    }
+  async function retry() {
+    if (!view || busy) return;
+    setBusy("agent");
+    await call("重试", { action: "retry", id: view.id });
     setBusy(null);
   }
 
   const selectedCase = caseId ? getCaseById(caseId) : null;
-  const visited = new Set(runs.flatMap((r) => r.events.map((e) => e.node)));
-  const lastNode = runs.at(-1)?.events.at(-1)?.node;
+  const visited = new Set(runs.flatMap((r) => r.steps.map((s) => s.node)));
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-      {/* Title + model */}
-      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">
-            问诊 Agent <span className="text-base font-normal text-muted">LangGraph</span>
-          </h1>
-          <p className="text-sm text-muted">
-            只给主诉，由 Agent 自己追问、识别危险信号、鉴别诊断并自查；右侧实时显示图的执行轨迹
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          {llmKind === "mock" && (
-            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800">
-              离线模拟模式（非真实模型）
-            </span>
-          )}
-          <span className="text-sm text-muted">模型：</span>
-          <ModelSelector selectedModel={modelId} onSelect={setModelId} compact />
-        </div>
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold">
+          问诊 Agent <span className="text-base font-normal text-muted">LangGraph · backend</span>
+        </h1>
+        <p className="text-sm text-muted">
+          预问诊：只给主诉，Agent 按模板追问、规则先查危险信号、最后写门诊病历草稿给医生（不下诊断）。右侧是记录表和每次请求经过的图节点。
+        </p>
       </div>
 
-      {/* Case picker */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="text-xs text-muted">从病例开始（只给主诉）：</span>
         {MEDICAL_CASES.map((c) => (
@@ -267,30 +209,19 @@ export function AgentClient() {
         </button>
       </div>
 
-      {/* Graph map */}
       <div className="mb-4 flex flex-wrap items-center gap-1 rounded-xl border border-border bg-white px-4 py-3 text-xs">
-        {["intake", "red_flag", "ask", "diagnose", "care_plan", "self_check", "write_report"].map((n, i, arr) => (
-          <span key={n} className="flex items-center gap-1">
-            <span
-              data-testid={`map-${n}`}
-              className={`rounded-md px-2 py-1 ${
-                lastNode === n && busy
-                  ? "animate-pulse bg-primary text-white"
-                  : visited.has(n)
-                    ? "bg-primary/10 text-primary"
-                    : "bg-gray-100 text-muted"
-              }`}
-            >
-              {NODE_INFO[n].icon} {NODE_INFO[n].label}
+        {NODES.map((n, i) => (
+          <span key={n.id} className="flex items-center gap-1">
+            <span data-testid={`map-${n.id}`} className={`rounded-md px-2 py-1 ${visited.has(n.id) ? "bg-primary/10 text-primary" : "bg-gray-100 text-muted"}`}>
+              {n.label}
             </span>
-            {i < arr.length - 1 && <span className="text-muted">→</span>}
+            {i < NODES.length - 1 && <span className="text-muted">→</span>}
           </span>
         ))}
-        <span className="ml-2 text-muted">（追问 ↺ 最多 4 轮；自查不通过 ↺ 最多重写 2 次；急诊直接出结论）</span>
+        <span className="ml-2 text-muted">（规则命中Ⅰ、Ⅱ级直接急诊；追问最多 4 轮；自查不通过最多重写 2 次）</span>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* Chat */}
         <section className="flex flex-col rounded-2xl border border-border bg-white shadow-sm lg:col-span-7">
           <div className="flex items-center justify-between border-b border-border px-5 py-3">
             <h2 className="font-bold text-primary">问诊对话</h2>
@@ -303,9 +234,7 @@ export function AgentClient() {
 
           <div className="flex-1 space-y-3 overflow-y-auto p-4" style={{ minHeight: 320, maxHeight: 460 }}>
             {transcript.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-sm text-muted">
-                选一个病例，或以患者身份描述你的不适
-              </div>
+              <div className="flex h-full items-center justify-center text-sm text-muted">选一个病例，或以患者身份描述你的不适</div>
             ) : (
               transcript.map((t, i) => (
                 <div key={i} className={`flex gap-3 ${t.role === "agent" ? "" : "flex-row-reverse"}`}>
@@ -316,71 +245,67 @@ export function AgentClient() {
                   >
                     {t.role === "agent" ? "AI" : "患"}
                   </div>
-                  <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm leading-relaxed ${
-                      t.role === "agent" ? "bg-blue-50" : "bg-green-50"
-                    }`}
-                  >
+                  <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm leading-relaxed ${t.role === "agent" ? "bg-blue-50" : "bg-green-50"}`}>
                     {t.content}
                   </div>
                 </div>
               ))
             )}
-            {busy === "agent" || busy === "auto" ? (
+            {busy && busy !== "patient" ? (
               <div className="flex items-center gap-2 text-xs text-muted">
                 <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                Agent 思考中…
+                Agent 处理中…
               </div>
             ) : null}
             <div ref={chatEnd} />
           </div>
 
-          {error && (
-            <div className="mx-4 mb-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">{error}</div>
-          )}
+          {error && <div className="mx-4 mb-2 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">{error}</div>}
 
           <div className="space-y-2 border-t border-border p-4">
-            {caseId && !finished && (
-              <div className="flex flex-wrap gap-2">
-                {runs.length === 0 && (
+            <div className="flex flex-wrap gap-2">
+              {caseId && !finished && status !== "failed" && (
+                <>
+                  {awaiting && (
+                    <button
+                      onClick={answerWithSimulatedPatient}
+                      disabled={!!busy}
+                      className="rounded-lg border border-secondary px-4 py-2 text-sm font-medium text-secondary hover:bg-secondary/10 disabled:opacity-50"
+                    >
+                      {busy === "patient" ? "模拟患者回答中…" : "🧑 让模拟患者回答"}
+                    </button>
+                  )}
                   <button
-                    onClick={start}
+                    onClick={autoRun}
                     disabled={!!busy}
-                    className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
+                    className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
                   >
-                    开始问诊
+                    {busy === "auto" ? "自动问诊中…" : "⏩ 自动跑完整场问诊"}
                   </button>
-                )}
-                {awaiting && (
-                  <button
-                    onClick={answerWithSimulatedPatient}
-                    disabled={!!busy}
-                    className="rounded-lg border border-secondary px-4 py-2 text-sm font-medium text-secondary hover:bg-secondary/10 disabled:opacity-50"
-                  >
-                    {busy === "patient" ? "模拟患者回答中…" : "🧑 让模拟患者回答"}
-                  </button>
-                )}
+                </>
+              )}
+              {status === "failed" && (
                 <button
-                  onClick={autoRun}
+                  onClick={retry}
                   disabled={!!busy}
-                  className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
                 >
-                  {busy === "auto" ? "自动问诊中…" : "⏩ 自动跑完整场问诊"}
+                  从失败的步骤重试
                 </button>
-              </div>
-            )}
+              )}
+            </div>
             <div className="flex gap-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && send(input)}
-                disabled={finished || !!busy}
+                disabled={finished || status === "failed" || !!busy}
                 placeholder={finished ? "本次问诊已结束，选择病例重新开始" : "以患者身份输入…"}
                 className="flex-1 rounded-lg border border-border px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:bg-gray-50"
               />
               <button
                 onClick={() => send(input)}
-                disabled={!input.trim() || finished || !!busy}
+                disabled={!input.trim() || finished || status === "failed" || !!busy}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark disabled:opacity-50"
               >
                 发送
@@ -389,108 +314,70 @@ export function AgentClient() {
           </div>
         </section>
 
-        {/* Trace */}
-        <section className="flex flex-col rounded-2xl border border-border bg-white shadow-sm lg:col-span-5">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="font-bold text-primary">执行轨迹</h2>
-          </div>
-          <div className="flex-1 space-y-4 overflow-y-auto p-4" style={{ minHeight: 320, maxHeight: 560 }}>
-            {runs.length === 0 && <div className="text-sm text-muted">每次请求会在这里按节点展开</div>}
-            {runs.map((run, ri) => (
-              <div key={run.id} data-testid="trace-run">
-                <div className="mb-2 flex items-center justify-between text-xs text-muted">
-                  <span className="font-semibold text-foreground">第 {ri + 1} 次请求</span>
-                  {run.status === "done" && (
-                    <span>
-                      {(run.ms! / 1000).toFixed(1)}s · {run.calls} 次模型调用
-                      {run.tokens ? ` · ${run.tokens} tokens` : ""}
-                    </span>
-                  )}
-                  {run.status === "error" && <span className="text-red-600">失败</span>}
-                </div>
-                <ol className="space-y-1.5 border-l-2 border-primary/20 pl-3">
-                  {run.events.map((e, i) => (
-                    <li key={i} className="text-xs" data-testid={`trace-${e.node}`}>
-                      <details>
-                        <summary className="cursor-pointer">
-                          <span className="font-medium">
-                            {NODE_INFO[e.node]?.icon} {NODE_INFO[e.node]?.label ?? e.node}
-                          </span>
-                          <span className="ml-1 text-muted">{e.node}</span>
-                          <div className="ml-4 text-slate-600">{summarizeUpdate(e.node, e.update)}</div>
-                        </summary>
-                        <pre className="mt-1 max-h-48 overflow-auto rounded bg-slate-50 p-2 text-[10px] leading-snug">
-                          {JSON.stringify(e.update, null, 2)}
-                        </pre>
-                      </details>
-                    </li>
+        <section className="flex flex-col gap-4 lg:col-span-5">
+          <div className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="font-bold text-primary">危险分级与记录表</h2>
+              {view && (
+                <span className={`rounded-full px-2 py-0.5 text-xs ${status === "emergency" ? "bg-red-100 text-red-700" : "bg-gray-100 text-muted"}`}>{view.level}</span>
+              )}
+            </div>
+            {!view ? (
+              <p className="text-xs text-muted">主诉发出后出现。每个已回答的要点都保留患者原话。</p>
+            ) : (
+              <table className="w-full text-xs">
+                <tbody>
+                  {view.table.map((row) => (
+                    <tr key={row.label} className="border-t border-border/60">
+                      <td className="py-1 pr-2">{row.label}</td>
+                      <td className={`py-1 ${row.status === "answered" ? "text-green-700" : "text-muted"}`}>
+                        {STATUS_TEXT[row.status]}
+                        {row.quote && <span className="ml-1 text-slate-600">“{row.quote}”</span>}
+                      </td>
+                    </tr>
                   ))}
-                </ol>
-              </div>
-            ))}
-            <div ref={traceEnd} />
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          <div className="flex flex-col rounded-2xl border border-border bg-white shadow-sm">
+            <div className="border-b border-border px-5 py-3">
+              <h2 className="font-bold text-primary">执行轨迹</h2>
+            </div>
+            <div className="space-y-4 overflow-y-auto p-4" style={{ maxHeight: 360 }}>
+              {runs.length === 0 && <div className="text-sm text-muted">每次请求会在这里按节点展开</div>}
+              {runs.map((run, ri) => (
+                <div key={run.id} data-testid="trace-run">
+                  <div className="mb-1 flex items-center justify-between text-xs text-muted">
+                    <span className="font-semibold text-foreground">
+                      第 {ri + 1} 次请求 · {run.label}
+                    </span>
+                    {run.ms !== undefined && <span>{(run.ms / 1000).toFixed(1)}s</span>}
+                  </div>
+                  {run.status === "error" && <div className="text-xs text-red-600">失败：{run.error}</div>}
+                  <ol className="space-y-1 border-l-2 border-primary/20 pl-3">
+                    {run.steps.map((s, i) => (
+                      <li key={i} className="text-xs" data-testid={`trace-${s.node}`}>
+                        <span className="font-medium">{LABEL[s.node] ?? s.node}</span>
+                        <span className="ml-1 text-slate-600">{s.summary}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+              <div ref={traceEnd} />
+            </div>
           </div>
         </section>
       </div>
 
-      {/* Record */}
-      {finished && finalState?.report && (
-        <section
-          data-testid="report"
-          className={`mt-6 rounded-2xl border bg-white shadow-sm ${
-            status === "emergency" ? "border-red-300" : "border-border"
-          }`}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-3">
-            <h2 className={`font-bold ${status === "emergency" ? "text-red-600" : "text-primary"}`}>
-              {status === "emergency" ? "急诊提示" : "结构化病历"}
-            </h2>
-            {selectedCase && status === "complete" && (
-              <button
-                onClick={score}
-                disabled={!!busy}
-                className="rounded-lg border border-primary px-3 py-1 text-xs font-medium text-primary hover:bg-primary/5 disabled:opacity-50"
-              >
-                {busy === "score" ? "评分中…" : "用评分裁判打分"}
-              </button>
-            )}
+      {view?.output && (
+        <section data-testid="report" className={`mt-6 rounded-2xl border bg-white shadow-sm ${status === "emergency" ? "border-red-300" : "border-border"}`}>
+          <div className="border-b border-border px-5 py-3">
+            <h2 className={`font-bold ${status === "emergency" ? "text-red-600" : "text-primary"}`}>{status === "emergency" ? "急诊提示" : "门诊病历草稿"}</h2>
           </div>
-          <div className="grid gap-6 p-5 lg:grid-cols-3">
-            <div className="prose prose-sm max-w-none text-sm lg:col-span-2 [&_li]:my-0.5 [&_p]:my-2 [&_ul]:list-disc [&_ul]:pl-5">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{finalState.report}</ReactMarkdown>
-            </div>
-            <aside className="space-y-3 text-xs">
-              {scores && (
-                <div className="rounded-lg bg-primary/5 p-3">
-                  <div className="mb-1 font-semibold">裁判评分</div>
-                  <div>诊断准确性 {scores.accuracy}</div>
-                  <div>病历完整性 {scores.completeness}</div>
-                  <div>医学规范性 {scores.standardization}</div>
-                  <div>建议合理性 {scores.recommendation}</div>
-                  <div className="mt-1 text-muted">{scores.comments}</div>
-                </div>
-              )}
-              {scoreError && <div className="rounded-lg bg-red-50 p-3 text-red-700">评分失败：{scoreError}</div>}
-              {selectedCase && (
-                <details className="rounded-lg bg-amber-50 p-3">
-                  <summary className="cursor-pointer font-medium">标准答案（Agent 看不到）</summary>
-                  <p className="mt-2">主要诊断：{selectedCase.expectedDiagnosis.mainDiagnosis}</p>
-                  <p>鉴别：{selectedCase.expectedDiagnosis.differentialDiagnosis.join("、")}</p>
-                  <p>检查：{selectedCase.expectedDiagnosis.recommendedTests.join("、")}</p>
-                </details>
-              )}
-              {finalState.droppedFacts.length > 0 && (
-                <div className="rounded-lg bg-slate-50 p-3">
-                  <div className="font-medium">被丢弃的「事实」（找不到患者原话）</div>
-                  <ul className="mt-1 list-disc pl-4">
-                    {finalState.droppedFacts.map((f, i) => (
-                      <li key={i}>{f.statement}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </aside>
-          </div>
+          <pre className="whitespace-pre-wrap p-5 font-sans text-sm leading-relaxed">{view.output}</pre>
         </section>
       )}
 

@@ -115,22 +115,4 @@ export function selfCheckPrompt(
   };
 }
 
-export function patientPrompt(
-  profile: { age: number; gender: string; chiefComplaint: string },
-  caseDialogue: { role: "doctor" | "patient"; content: string }[],
-  transcript: Turn[],
-  questions: string[],
-) {
-  return {
-    system: `你在扮演一位来门诊看病的患者（${profile.age}岁，${profile.gender}）。
-规则：
-1. 只能根据下面「病例资料」里患者说过的内容回答，不要编造新的症状、数字或病史。
-2. 病例资料里没有的信息，就说「这个我不太清楚」或「没注意」。
-3. 口语化、简短，像普通人说话。不要说出任何医学诊断名。
-4. 只回答医生这次问到的问题。
-
-病例资料（医生与你之前的真实对话）：
-${caseDialogue.map((d) => `${d.role === "doctor" ? "医生" : "患者"}：${d.content}`).join("\n")}`,
-    user: `到目前为止的对话：\n${formatTranscript(transcript)}\n\n医生现在问：${questions.join(" ")}`,
-  };
-}
+export { patientPrompt } from "@/lib/sim/patient";

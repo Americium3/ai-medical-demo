@@ -1,4 +1,4 @@
-import type { AgentLLM, AgentTask, StructuredCall, UsageRecord } from "./llm";
+import type { AgentLLM, AgentTask, StructuredCall, UsageRecord } from "@/lib/sim/gateway";
 import type {
   AskOutput,
   DifferentialOutput,

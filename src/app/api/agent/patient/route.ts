@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { getCaseById } from "@/data/cases";
-import { AgentConfigError, resolveAgentLLM } from "@/lib/agent/config";
-import { createLLMPatient, createScriptedPatient } from "@/lib/agent/patient";
+import { getModelById, DEFAULT_MODEL_ID } from "@/data/models";
+import { createGatewayLLM } from "@/lib/sim/gateway";
+import { createLLMPatient, createScriptedPatient } from "@/lib/sim/patient";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -22,13 +23,14 @@ export async function POST(req: Request) {
   const c = getCaseById(parsed.data.caseId);
   if (!c) return Response.json({ error: "Unknown case" }, { status: 404 });
 
+  // Without a gateway key (or with AGENT_MOCK=1) the scripted patient answers from the case dialogue.
+  const scripted = process.env.AGENT_MOCK === "1" || !process.env.AI_GATEWAY_API_KEY;
   try {
-    const llm = resolveAgentLLM(parsed.data.model);
-    const patient = llm.kind === "mock" ? createScriptedPatient(c) : createLLMPatient(c, llm);
+    const model = getModelById(parsed.data.model ?? DEFAULT_MODEL_ID) ?? getModelById(DEFAULT_MODEL_ID)!;
+    const patient = scripted ? createScriptedPatient(c) : createLLMPatient(c, createGatewayLLM(model.gatewayId));
     const answer = await patient(parsed.data.transcript, parsed.data.questions);
-    return Response.json({ answer });
+    return Response.json({ answer, scripted });
   } catch (err) {
-    const status = err instanceof AgentConfigError ? 500 : 502;
-    return Response.json({ error: err instanceof Error ? err.message : "Patient simulator failed" }, { status });
+    return Response.json({ error: err instanceof Error ? err.message : "Patient simulator failed" }, { status: 502 });
   }
 }

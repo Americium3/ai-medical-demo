@@ -24,17 +24,17 @@ import { parseArgs } from "node:util";
 import { generateText, type LanguageModel } from "ai";
 import { gateway } from "@ai-sdk/gateway";
 import { MockLanguageModelV3 } from "ai/test";
-import { MEDICAL_CASES, type MedicalCase } from "../src/data/cases";
-import { getModelById } from "../src/data/models";
-import { MEDICAL_CONSULTATION_PROMPT, buildConsultationPrompt } from "../src/lib/prompts";
-import { judgeTotal, scoreDiagnosis, type JudgeScore } from "../src/lib/scoring";
-import { createGatewayLLM } from "../src/lib/agent/llm";
-import { createMockLLM, mockRecordFromText } from "../src/lib/agent/mock-llm";
-import { createLLMPatient, createScriptedPatient, openingLine } from "../src/lib/agent/patient";
-import { runToCompletion } from "../src/lib/agent/run";
-import { normalize } from "../src/lib/agent/grounding";
-import type { Turn } from "../src/lib/agent/schemas";
-import { writeEvalOutput } from "./lib/eval-output";
+import { MEDICAL_CASES, type MedicalCase } from "@/data/cases";
+import { getModelById } from "@/data/models";
+import { MEDICAL_CONSULTATION_PROMPT, buildConsultationPrompt } from "@/lib/prompts";
+import { judgeTotal, scoreDiagnosis, type JudgeScore } from "@/lib/scoring";
+import { createGatewayLLM } from "@/lib/sim/gateway";
+import { createMockLLM, mockRecordFromText } from "./lib/mock-llm";
+import { createLLMPatient, createScriptedPatient, openingLine } from "@/lib/sim/patient";
+import { runToCompletion } from "./lib/run";
+import { normalize } from "./lib/grounding";
+import type { Turn } from "./lib/schemas";
+import { writeEvalOutput } from "../../scripts/lib/eval-output";
 
 const { values: args } = parseArgs({
   options: {

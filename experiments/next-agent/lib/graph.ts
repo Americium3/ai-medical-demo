@@ -1,5 +1,5 @@
 import { Annotation, END, START, StateGraph } from "@langchain/langgraph";
-import type { AgentLLM } from "./llm";
+import type { AgentLLM } from "@/lib/sim/gateway";
 import { groundFacts } from "./grounding";
 import { matchPatientTurns, maxLevel } from "./red-flags";
 import {
@@ -55,8 +55,8 @@ export const ConsultationState = Annotation.Root({
 });
 export type ConsultationStateT = typeof ConsultationState.State;
 
-/** Answers the agent's questions during an offline evaluation. */
-export type PatientSimulator = (transcript: Turn[], questions: string[]) => Promise<string>;
+import type { PatientSimulator } from "@/lib/sim/patient";
+export type { PatientSimulator };
 
 export interface GraphDeps {
   llm: AgentLLM;

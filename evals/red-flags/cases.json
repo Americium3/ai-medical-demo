@@ -6,10 +6,8 @@
       "最近老是不时呼吸困难"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -22,10 +20,8 @@
       "无缘无故晕倒了"
     ],
     "expect": {
-      "srcRule": "意识改变/晕厥",
-      "srcLevel": "emergency",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": "意识改变或晕厥",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -38,10 +34,8 @@
       "毫无征兆就晕倒"
     ],
     "expect": {
-      "srcRule": "意识改变/晕厥",
-      "srcLevel": "emergency",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": "意识改变或晕厥",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -54,10 +48,8 @@
       "全身无力晕倒了"
     ],
     "expect": {
-      "srcRule": "意识改变/晕厥",
-      "srcLevel": "emergency",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": "意识改变或晕厥",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -70,10 +62,8 @@
       "一直不停抽搐"
     ],
     "expect": {
-      "srcRule": "抽搐",
-      "srcLevel": "emergency",
-      "backendRule": "抽搐",
-      "backendLevel": 2
+      "rule": "抽搐",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -86,10 +76,8 @@
       "不断呕血"
     ],
     "expect": {
-      "srcRule": "消化道大出血",
-      "srcLevel": "emergency",
-      "backendRule": "消化道大出血",
-      "backendLevel": 2
+      "rule": "消化道大出血",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -102,10 +90,8 @@
       "止不住地吐血"
     ],
     "expect": {
-      "srcRule": "消化道大出血",
-      "srcLevel": "emergency",
-      "backendRule": "消化道大出血",
-      "backendLevel": 2
+      "rule": "消化道大出血",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -118,10 +104,8 @@
       "不知不觉昏过去"
     ],
     "expect": {
-      "srcRule": "意识改变/晕厥",
-      "srcLevel": "emergency",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": "意识改变或晕厥",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -134,10 +118,8 @@
       "我这是不是呼吸困难啊"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "non-negating-compound",
@@ -151,10 +133,8 @@
       "没有发烧但呼吸困难"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "contrast-clause"
@@ -168,10 +148,8 @@
       "喘不上气"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "multi-turn"
@@ -184,10 +162,8 @@
       "心里不舒服喘不上气"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -200,10 +176,8 @@
       "受不了了呼吸困难"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -216,10 +190,8 @@
       "没完没了地吐血"
     ],
     "expect": {
-      "srcRule": "消化道大出血",
-      "srcLevel": "emergency",
-      "backendRule": "消化道大出血",
-      "backendLevel": 2
+      "rule": "消化道大出血",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -232,10 +204,8 @@
       "不知道为什么突然晕倒了"
     ],
     "expect": {
-      "srcRule": "意识改变/晕厥",
-      "srcLevel": "emergency",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": "意识改变或晕厥",
+      "level": 2
     },
     "tags": [
       "non-negating-compound"
@@ -248,10 +218,8 @@
       "咳嗽不发烧，可是喘不过气"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "contrast-clause"
@@ -265,10 +233,8 @@
       "就是喘不过气"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "multi-turn"
@@ -281,10 +247,8 @@
       "突然喘不上气"
     ],
     "expect": {
-      "srcRule": "呼吸困难",
-      "srcLevel": "emergency",
-      "backendRule": "呼吸困难",
-      "backendLevel": 2
+      "rule": "呼吸困难",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -297,10 +261,8 @@
       "胸口痛了一个小时，一直出大汗"
     ],
     "expect": {
-      "srcRule": "胸痛伴大汗/持续不缓解",
-      "srcLevel": "emergency",
-      "backendRule": "胸痛伴大汗或持续不缓解",
-      "backendLevel": 2
+      "rule": "胸痛伴大汗或持续不缓解",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -313,10 +275,8 @@
       "压榨样的胸口痛"
     ],
     "expect": {
-      "srcRule": "胸痛伴大汗/持续不缓解",
-      "srcLevel": "emergency",
-      "backendRule": "胸痛伴大汗或持续不缓解",
-      "backendLevel": 2
+      "rule": "胸痛伴大汗或持续不缓解",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -329,10 +289,8 @@
       "嘴歪了，说话不清楚"
     ],
     "expect": {
-      "srcRule": "卒中征象",
-      "srcLevel": "emergency",
-      "backendRule": "卒中征象",
-      "backendLevel": 2
+      "rule": "卒中征象",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -345,10 +303,8 @@
       "突然一侧肢体无力"
     ],
     "expect": {
-      "srcRule": "卒中征象",
-      "srcLevel": "emergency",
-      "backendRule": "卒中征象",
-      "backendLevel": 2
+      "rule": "卒中征象",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -361,10 +317,8 @@
       "半边身子没力气"
     ],
     "expect": {
-      "srcRule": "卒中征象",
-      "srcLevel": "emergency",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": "卒中征象",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -377,10 +331,8 @@
       "孩子抽风了"
     ],
     "expect": {
-      "srcRule": "抽搐",
-      "srcLevel": "emergency",
-      "backendRule": "抽搐",
-      "backendLevel": 2
+      "rule": "抽搐",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -393,10 +345,8 @@
       "吐血了一大口"
     ],
     "expect": {
-      "srcRule": "消化道大出血",
-      "srcLevel": "emergency",
-      "backendRule": "消化道大出血",
-      "backendLevel": 2
+      "rule": "消化道大出血",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -409,10 +359,8 @@
       "大便是柏油样的"
     ],
     "expect": {
-      "srcRule": "消化道大出血",
-      "srcLevel": "emergency",
-      "backendRule": "消化道大出血",
-      "backendLevel": 2
+      "rule": "消化道大出血",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -425,10 +373,8 @@
       "这辈子最厉害的头痛"
     ],
     "expect": {
-      "srcRule": "最剧烈头痛",
-      "srcLevel": "emergency",
-      "backendRule": "突发剧烈头痛",
-      "backendLevel": 2
+      "rule": "突发剧烈头痛",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -441,10 +387,8 @@
       "头痛得从来没有这么厉害"
     ],
     "expect": {
-      "srcRule": "最剧烈头痛",
-      "srcLevel": "emergency",
-      "backendRule": "突发剧烈头痛",
-      "backendLevel": 2
+      "rule": "突发剧烈头痛",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -457,10 +401,8 @@
       "有点不想活了"
     ],
     "expect": {
-      "srcRule": "自伤风险",
-      "srcLevel": "emergency",
-      "backendRule": "自伤风险",
-      "backendLevel": 2
+      "rule": "自伤风险",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -473,10 +415,8 @@
       "想自杀"
     ],
     "expect": {
-      "srcRule": "自伤风险",
-      "srcLevel": "emergency",
-      "backendRule": "自伤风险",
-      "backendLevel": 2
+      "rule": "自伤风险",
+      "level": 2
     },
     "tags": [
       "plain"
@@ -489,10 +429,8 @@
       "我爸昏迷了"
     ],
     "expect": {
-      "srcRule": "意识改变/晕厥",
-      "srcLevel": "emergency",
-      "backendRule": "意识丧失或呼吸停止",
-      "backendLevel": 1
+      "rule": "意识丧失或呼吸停止",
+      "level": 1
     },
     "tags": [
       "plain"
@@ -505,10 +443,8 @@
       "怎么叫都叫不醒"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": "意识丧失或呼吸停止",
-      "backendLevel": 1
+      "rule": "意识丧失或呼吸停止",
+      "level": 1
     },
     "tags": [
       "plain"
@@ -521,10 +457,8 @@
       "突然停止呼吸了"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": "意识丧失或呼吸停止",
-      "backendLevel": 1
+      "rule": "意识丧失或呼吸停止",
+      "level": 1
     },
     "tags": [
       "plain"
@@ -537,10 +471,8 @@
       "上楼就胸闷"
     ],
     "expect": {
-      "srcRule": "活动相关胸闷/胸痛",
-      "srcLevel": "urgent",
-      "backendRule": "活动相关胸闷胸痛",
-      "backendLevel": 3
+      "rule": "活动相关胸闷胸痛",
+      "level": 3
     },
     "tags": [
       "urgent"
@@ -553,10 +485,8 @@
       "发烧到39.5度"
     ],
     "expect": {
-      "srcRule": "高热",
-      "srcLevel": "urgent",
-      "backendRule": "高热",
-      "backendLevel": 3
+      "rule": "高热",
+      "level": 3
     },
     "tags": [
       "urgent"
@@ -569,10 +499,8 @@
       "这两天拉黑便"
     ],
     "expect": {
-      "srcRule": "黑便/便血",
-      "srcLevel": "urgent",
-      "backendRule": "黑便",
-      "backendLevel": 3
+      "rule": "黑便",
+      "level": 3
     },
     "tags": [
       "urgent"
@@ -585,10 +513,8 @@
       "三个月瘦了10斤"
     ],
     "expect": {
-      "srcRule": "不明原因体重下降",
-      "srcLevel": "urgent",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": "不明原因体重下降",
+      "level": 3
     },
     "tags": [
       "urgent"
@@ -601,10 +527,8 @@
       "一直不停地拉黑便"
     ],
     "expect": {
-      "srcRule": "黑便/便血",
-      "srcLevel": "urgent",
-      "backendRule": "黑便",
-      "backendLevel": 3
+      "rule": "黑便",
+      "level": 3
     },
     "tags": [
       "urgent",
@@ -618,10 +542,8 @@
       "没有呼吸困难"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -634,10 +556,8 @@
       "我没有呼吸困难，也没有胸痛"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -650,10 +570,8 @@
       "否认胸痛大汗"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -666,10 +584,8 @@
       "不抽搐"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -682,10 +598,8 @@
       "孩子没有抽搐过"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -698,10 +612,8 @@
       "无呕血"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -714,10 +626,8 @@
       "没吐血"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -730,10 +640,8 @@
       "否认有明显的呼吸困难"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial",
@@ -747,10 +655,8 @@
       "没有出现呼吸困难"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial",
@@ -764,10 +670,8 @@
       "没有晕倒过"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -780,10 +684,8 @@
       "从来没有昏迷"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -796,10 +698,8 @@
       "无黑便"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -812,10 +712,8 @@
       "没有便血"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -828,10 +726,8 @@
       "没有口角歪斜"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial"
@@ -844,10 +740,8 @@
       "未出现抽搐"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial",
@@ -861,10 +755,8 @@
       "没感到喘不上气"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial",
@@ -878,10 +770,8 @@
       "没觉得呼吸困难"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial",
@@ -895,10 +785,8 @@
       "也没有什么呼吸困难"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial",
@@ -913,10 +801,8 @@
       "没有呼吸困难"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "denial",
@@ -930,10 +816,8 @@
       "咳嗽三天，有点低烧"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -946,10 +830,8 @@
       "头痛一周了"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -962,10 +844,8 @@
       "膝盖疼，上下楼梯更明显"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -978,10 +858,8 @@
       "胃胀反酸"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -994,10 +872,8 @@
       "嗓子疼"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1010,10 +886,8 @@
       "晚上老是睡不着"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1026,10 +900,8 @@
       "拉肚子两天"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1042,10 +914,8 @@
       "腰疼"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1058,10 +928,8 @@
       "皮肤起疹子很痒"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1074,10 +942,8 @@
       "流鼻涕打喷嚏"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1090,10 +956,8 @@
       "胸闷两周了"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1106,10 +970,8 @@
       "发烧38度"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1122,10 +984,8 @@
       "不时咳嗽几声"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1138,10 +998,8 @@
       "头晕了一下，现在好了"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"
@@ -1154,10 +1012,8 @@
       "月经推迟了一周"
     ],
     "expect": {
-      "srcRule": null,
-      "srcLevel": "routine",
-      "backendRule": null,
-      "backendLevel": 4
+      "rule": null,
+      "level": 4
     },
     "tags": [
       "routine"

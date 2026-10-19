@@ -1,5 +1,5 @@
 /**
- * The consultation graph (design doc §6–§8).
+ * The consultation graph (DESIGN.md §6–§8).
  *
  *   setup → screen ─┬─ rule hit level 1–2 → emergency (no model call)
  *             ▲     └─ understand ─┬─ triage ─┬─ level 1–2 → emergency
@@ -115,7 +115,7 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, opts: Gr
     return { level, ruleHits, levelReason: "患者原话命中危险信号规则" };
   }
 
-  /** Update the record from the latest patient turn only (design doc §8.2). */
+  /** Update the record from the latest patient turn only (DESIGN.md §8.2). */
   async function understand(s: State) {
     const template = templateOf(s);
     const latest = s.transcript.at(-1)!.content;

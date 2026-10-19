@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test \"tests/**/*.test.ts\" \"backend/tests/**/*.test.ts\"",
+    "test": "tsx --test \"tests/**/*.test.ts\" \"backend/tests/**/*.test.ts\" \"experiments/next-agent/tests/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "demo": "tsx backend/src/demo.ts",
     "backend:server": "tsx backend/src/main.ts",

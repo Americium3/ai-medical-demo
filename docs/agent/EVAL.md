@@ -12,7 +12,7 @@ Agent 只拿到主诉，要靠自己追问把信息问出来。它写出的病�
 | **B** 单次调用·仅主诉 | 只有一句主诉 | 同上 | 不追问时的下限 |
 | **C** Agent·模拟患者 | 只有一句主诉 | LangGraph agent 追问，由模拟患者回答 | 本项目 |
 
-- **模拟患者**：另一个 LLM，只能根据病例原对话回答，没有的信息答「不太清楚」，不许说诊断名（`src/lib/agent/prompts.ts` → `patientPrompt`）。
+- **模拟患者**：另一个 LLM，只能根据病例原对话回答，没有的信息答「不太清楚」，不许说诊断名（`src/lib/sim/patient.ts` → `patientPrompt`）。
 - **裁判**：仓库原有的评分 prompt，对照 `data/cases.ts` 的标准答案打 4 项分。Phase 0 已改为解析失败直接报错，不再静默给默认分。
 - **偏差控制**（#8）：模拟患者和裁判各用一个与被测 agent **不同家族**的模型，两者之间也不同家族（`--patient` / `--judge` 默认 `auto`，自动挑选；手动指定了同家族的模型会直接报错退出）。以前模拟患者和 agent 用同一个模型，默认裁判 `openai/gpt-4o-mini` 又和默认 agent 同属 OpenAI，可能「自己人给自己人打高分」。
 - **总分**：四项按原权重加权（去掉「响应速度」后重新归一），0-100。
@@ -27,11 +27,11 @@ Agent 只拿到主诉，要靠自己追问把信息问出来。它写出的病�
 
 ```bash
 # 离线：确定性替身，只验证评测流程
-npx tsx scripts/eval-agent.ts --mock
+npx tsx experiments/next-agent/eval-agent.ts --mock
 
 # 真实模型（需要 AI_GATEWAY_API_KEY，且网络能访问 ai-gateway.vercel.sh）
-npx tsx scripts/eval-agent.ts --model gpt-4o-mini --runs 3
-npx tsx scripts/eval-agent.ts --model claude-sonnet --runs 3   # 患者、裁判自动选 OpenAI / DeepSeek
+npx tsx experiments/next-agent/eval-agent.ts --model gpt-4o-mini --runs 3
+npx tsx experiments/next-agent/eval-agent.ts --model claude-sonnet --runs 3   # 患者、裁判自动选 OpenAI / DeepSeek
 ```
 
 结果写入 `docs/agent/eval/results-<tag>.json`（含每次的完整输出和问诊记录）和 `summary-<tag>.md`。
@@ -99,6 +99,15 @@ npx tsx scripts/eval-red-flags.ts --model                    # backend 分级节
 |---|---|---|
 | backend 分级，真实 Bedrock（模型 + 规则） | 待运行：需要密钥 | 待运行：需要密钥 |
 | backend 分级，离线 mock（模型恒为 4 级，只看规则） | 召回 52.6%，否认/普通误判急诊 2.9% | 召回 **81.6%**，误判急诊 **0%**（剩下的是 backend 规则表的 7 条覆盖缺口，规则表合并留给 #13） |
+
+### 规则表合并后（#13）
+
+两套规则表合并成 `shared/safety/red-flags.ts` 里的一张（四级），补上了 backend 原来缺的晕厥、半边身子无力、不明原因体重下降。用例的期望也改成一套（[`eval/redflags-summary-rules-unified-2026-10-19.md`](eval/redflags-summary-rules-unified-2026-10-19.md)）：
+
+| | 危险信号召回 | 等级一致 | 明确否认误报 | 普通主诉误报 | 覆盖缺口 |
+|---|---|---|---|---|---|
+| 合并后的规则表 | **100%**（38/38） | 100% | 0/19 | 0/15 | **0 条**（原来 backend 7 条、src 2 条） |
+| backend 分级，离线 mock（模型恒为 4 级，只看规则） | 召回 81.6% → **100%** | | 误判急诊 0% | | |
 
 原话校验丢弃数（#5）：`eval-agent --mock` 共 27 条事实，丢弃 0 → 1 条（见上）。backend 的丢弃数现在由 `eval-backend.ts` 统计，离线 mock 平均 0.2 条/次（resp-001 有 1 条）。修复前没有这项统计，所以 backend 没有修复前的数字。
 

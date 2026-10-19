@@ -17,7 +17,7 @@ LangGraph 不是 LangChain 的替代品：本项目里节点内部用 LangChain 
 **LangChain（demo 1）**
 - `withStructuredOutput(zodSchema)` 是最有用的一块：模型输出直接变成有类型的对象，校验失败会抛错，不用自己写 `JSON.parse` 和正则。原项目评分接口的问题就是自己正则抽 JSON，失败时返回了默认分。
 - `method` 要显式选。真实模型用 `functionCalling`，兼容性最好（经 AI Gateway 转发到 Claude、DeepSeek 也能用）；纯文本的假模型只能用 `jsonMode`。
-- 离线测试可以用 `FakeListChatModel`，但它不会产生 tool call，所以测复杂流程时我改成自己注入一个确定性的 mock（见 `src/lib/agent/mock-llm.ts`）。
+- 离线测试可以用 `FakeListChatModel`，但它不会产生 tool call，所以测复杂流程时我改成自己注入一个确定性的 mock（见 `experiments/next-agent/lib/mock-llm.ts`）。
 
 **LangGraph（demo 2）**
 - 状态每个键都可以定义 reducer（追加还是覆盖），节点只返回局部更新，图的执行轨迹天然就能按节点流式推出去（`streamMode: "updates"`），这正好拿来做前端的执行轨迹。

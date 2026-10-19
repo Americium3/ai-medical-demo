@@ -1,5 +1,5 @@
 import type { Callbacks } from "@langchain/core/callbacks/manager";
-import type { AgentLLM, UsageRecord } from "./llm";
+import type { AgentLLM, UsageRecord } from "@/lib/sim/gateway";
 import {
   buildConsultationGraph,
   type ConsultationStateT,

@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace-base";
-import { createTracing } from "../shared/tracing/langfuse";
-import { createMockLLM } from "@/lib/agent/mock-llm";
-import { runConsultation, runToCompletion } from "@/lib/agent/run";
+import { createTracing } from "../../../shared/tracing/langfuse";
+import { createMockLLM } from "../lib/mock-llm";
+import { runConsultation, runToCompletion } from "../lib/run";
 
 // #9, Next.js side: /api/agent passes a per-request handler into the graph run.
 

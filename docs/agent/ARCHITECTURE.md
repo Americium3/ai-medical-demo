@@ -1,4 +1,6 @@
-# 问诊 Agent 架构
+# 早期原型的架构（Next.js 版）
+
+> 本文描述的是**早期原型**（`experiments/next-agent/`），它已经不在生产路径上。生产用的是 `backend/`，设计见 [DESIGN.md](DESIGN.md)。为什么合并成一套，见 #13。
 
 ## 一张图
 
@@ -19,7 +21,7 @@ flowchart LR
     write_report --> END2((结束))
 ```
 
-代码：`src/lib/agent/graph.ts`。状态定义在同一文件的 `ConsultationState`。
+代码：`experiments/next-agent/lib/graph.ts`。状态定义在同一文件的 `ConsultationState`。
 
 ## 节点
 

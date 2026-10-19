@@ -12,4 +12,6 @@ All three run offline; set `AI_GATEWAY_API_KEY` to hit a real model instead.
 
 `crewai/cases.json` and `crewai/prompts.json` are generated from `src/data/cases.ts` and `src/lib/prompts.ts` by `npx tsx scripts/export-cases.ts`.
 
+`next-agent/` is the early Next.js prototype of the consultation agent (Phases 2–4). It is no longer on the production path; see [`next-agent/README.md`](next-agent/README.md).
+
 Notes and the comparison live in [`docs/agent/FRAMEWORKS.md`](../docs/agent/FRAMEWORKS.md).
