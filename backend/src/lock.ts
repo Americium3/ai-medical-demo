@@ -11,6 +11,8 @@ import { RELEASE_SCRIPT, type RedisLike } from "./redis";
 export interface ConsultationLock {
   /** Take the lock for `id`, or null if someone holds it. Call the returned function to release it. */
   tryAcquire(id: string): Promise<(() => Promise<void>) | null>;
+  /** True while some request holds the lock, i.e. the consultation is running right now. */
+  isHeld(id: string): Promise<boolean>;
 }
 
 /** Per-process lock. Enough for one instance; use RedisLock when running several. */
@@ -23,6 +25,10 @@ export class InMemoryLock implements ConsultationLock {
     return async () => {
       this.held.delete(id);
     };
+  }
+
+  async isHeld(id: string) {
+    return this.held.has(id);
   }
 }
 
@@ -44,5 +50,9 @@ export class RedisLock implements ConsultationLock {
     return async () => {
       await this.redis.eval(RELEASE_SCRIPT, 1, key, token);
     };
+  }
+
+  async isHeld(id: string) {
+    return (await this.redis.exists(`consultation-lock:${id}`)) > 0;
   }
 }

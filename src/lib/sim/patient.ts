@@ -10,7 +10,7 @@ import type { AgentLLM } from "./gateway";
 export type Turn = { role: "patient" | "agent"; content: string };
 
 /** Answers the agent's questions during an offline evaluation. */
-export type PatientSimulator = (transcript: Turn[], questions: string[]) => Promise<string>;
+export type PatientSimulator = (transcript: Turn[], questions: string[], signal?: AbortSignal) => Promise<string>;
 
 export const patientOutputSchema = z.object({
   answer: z.string().describe("患者的口语化回答"),
@@ -50,8 +50,9 @@ export function openingLine(c: MedicalCase): string {
 
 /** LLM-played patient, constrained to what the case dialogue says. */
 export function createLLMPatient(c: MedicalCase, llm: AgentLLM): PatientSimulator {
-  return async (transcript: Turn[], questions: string[]) => {
+  return async (transcript: Turn[], questions: string[], signal?: AbortSignal) => {
     const out = await llm.invoke({
+      signal,
       task: "patient",
       schema: patientOutputSchema,
       ...patientPrompt(

@@ -29,6 +29,9 @@ export function fakeRedis(now: () => number = Date.now): RedisLike {
       }
       throw new Error("fake redis: unknown script");
     },
+    async exists(key) {
+      return live(key) ? 1 : 0;
+    },
     async ping() {
       return "PONG";
     },

@@ -103,12 +103,15 @@ setup → screen ─┬─ 规则命中Ⅰ/Ⅱ级 → emergency
 
 - 除 `/healthz`、`/readyz` 和演示页面外，接口都要求 `Authorization: Bearer <接口密钥>`。程序只保存密钥的哈希值，用恒定时间比较。
 - 问诊只对创建它的密钥可见，其他密钥一律 404。
-- 同一问诊同时只处理一个回答或重试，后到的请求返回 409。
+- 同一问诊同时只处理一个回答或重试，后到的请求返回 409；处理期间查询状态为「running」。
+- 客户端断开时中止运行，并取消正在进行的模型调用；问诊标为失败，可以重试。
 - 请求体不超过 8KB，单次输入不超过 500 字。
 - 日志不记录患者说的内容。
 - 模型调用失败返回 502，问诊保存为「失败」，可以用 `/retry` 从失败的那一步继续。
 
-代码：`backend/src/server.ts`、`backend/src/security.ts`、`backend/src/lock.ts`。
+Next.js 的 `/api/agent` 只做转发：后端的接口密钥留在服务端；可以按 IP 限流（`AGENT_RATE_LIMIT_PER_MINUTE`，默认关闭）；浏览器断开时转发请求随之中止，后端也就停下来。
+
+代码：`backend/src/server.ts`、`backend/src/security.ts`、`backend/src/lock.ts`、`src/app/api/agent/route.ts`、`src/lib/rate-limit.ts`。
 
 ## §12 成本控制
 

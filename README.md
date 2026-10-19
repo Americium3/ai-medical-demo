@@ -75,6 +75,8 @@ API_KEYS=dev-key npm run backend:server
 BACKEND_URL=http://localhost:8787 BACKEND_API_KEY=dev-key npm run dev
 ```
 
+公开部署时可以设置 `AGENT_RATE_LIMIT_PER_MINUTE`，给 `/api/agent` 和模拟患者接口按 IP 限流（默认关闭）。
+
 只看后端：`npm run demo`，在 http://localhost:8787 打开它自带的问诊页面。
 
 ```bash

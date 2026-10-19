@@ -27,6 +27,8 @@ export interface StructuredCall<T> {
   user: string;
   /** Typed inputs the prompt was built from; only the offline mock reads them. */
   context: unknown;
+  /** Aborts the call (and its retries) when the caller has gone away (#7). */
+  signal?: AbortSignal;
 }
 
 export interface UsageRecord {
@@ -163,11 +165,14 @@ export function createBedrockLLM(opts: BedrockOptions): LLM {
       let lastError = "no tool call in reply";
       let feedback = "";
       for (let attempt = 1; attempt <= 4; attempt++) {
+        call.signal?.throwIfAborted();
         const started = Date.now();
         let reply: AIMessage;
         try {
-          reply = (await runnable.invoke([new SystemMessage(system + feedback), new HumanMessage(call.user)])) as AIMessage;
+          reply = (await runnable.invoke([new SystemMessage(system + feedback), new HumanMessage(call.user)], { signal: call.signal })) as AIMessage;
         } catch (err) {
+          // An abort is not a model failure: pass it through so the run just stops.
+          if (call.signal?.aborted) throw err;
           throw new LLMError(call.task, err instanceof Error ? err.message : String(err));
         }
         usage.push({

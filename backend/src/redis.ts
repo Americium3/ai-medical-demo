@@ -8,6 +8,7 @@ import { Redis } from "ioredis";
 export interface RedisLike {
   set(key: string, value: string, px: "PX", ms: number, nx: "NX"): Promise<"OK" | null>;
   eval(script: string, numKeys: number, ...args: (string | number)[]): Promise<unknown>;
+  exists(key: string): Promise<number>;
   ping(): Promise<string>;
   quit(): Promise<unknown>;
 }
@@ -25,6 +26,7 @@ export function createRedis(url: string): RedisLike {
   return {
     set: (key, value, px, ms, nx) => client.set(key, value, px, ms, nx),
     eval: (script, numKeys, ...args) => client.eval(script, numKeys, ...args),
+    exists: (key) => client.exists(key),
     ping: () => client.ping(),
     quit: () => client.quit(),
   };

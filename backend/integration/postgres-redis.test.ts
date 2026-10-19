@@ -70,6 +70,17 @@ test("Postgres + Redis: concurrent answers on two instances, one runs, one is a 
   assert.equal(s.transcript.filter((t) => t.role === "patient").length, 2, "only one answer was recorded");
 });
 
+test("Redis lock: a second instance sees the lock as held until it is released", async () => {
+  const id = `it-${Date.now()}`;
+  const release = await new RedisLock(redis, 60_000).tryAcquire(id);
+  assert.ok(release);
+  const other = new RedisLock(redis, 60_000);
+  assert.equal(await other.isHeld(id), true);
+  assert.equal(await other.tryAcquire(id), null);
+  await release();
+  assert.equal(await other.isHeld(id), false);
+});
+
 test("Redis: rate limit shared by two limiter instances", async () => {
   const caller = `it-${Date.now()}`;
   const a = new RedisRateLimiter(redis, "it", 2, 60_000);

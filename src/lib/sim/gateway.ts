@@ -21,6 +21,8 @@ export interface StructuredCall<T> {
    * it; the offline mock reads it instead of parsing prompt text.
    */
   context: unknown;
+  /** Stops the call when the caller has gone away. */
+  signal?: AbortSignal;
 }
 
 export interface UsageRecord {
@@ -94,10 +96,7 @@ export function createGatewayLLM(
         const started = Date.now();
         let res: Awaited<ReturnType<typeof runnable.invoke>>;
         try {
-          res = await runnable.invoke([
-            new SystemMessage(call.system),
-            new HumanMessage(call.user),
-          ]);
+          res = await runnable.invoke([new SystemMessage(call.system), new HumanMessage(call.user)], { signal: call.signal });
         } catch (err) {
           throw new AgentLLMError(
             call.task,

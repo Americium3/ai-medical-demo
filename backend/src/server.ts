@@ -107,6 +107,11 @@ export function createApiServer(opts: ServerOptions): Server {
     const started = Date.now();
     const url = new URL(req.url ?? "/", "http://localhost");
     let status = 500;
+    // A client that disconnects before its response is sent cancels the run (#7).
+    const cancel = new AbortController();
+    res.on("close", () => {
+      if (!res.writableEnded) cancel.abort(new Error("client disconnected"));
+    });
     // While shutting down, close each connection once its response is sent.
     if (draining.has(server)) res.setHeader("connection", "close");
     try {
@@ -145,18 +150,18 @@ export function createApiServer(opts: ServerOptions): Server {
       if (req.method === "POST" && !id) {
         const { complaint } = parse(startSchema, await readJson(req));
         if (!(await daily.allow(caller))) throw new HttpError(429, "Daily consultation limit reached for this key");
-        const created = await opts.service.start(complaint, caller);
+        const created = await opts.service.start(complaint, caller, cancel.signal);
         status = 201;
         return send(res, 201, created);
       }
       if (req.method === "POST" && id && answers) {
         const { text } = parse(answerSchema, await readJson(req));
-        const answered = await opts.service.answer(id, text, caller);
+        const answered = await opts.service.answer(id, text, caller, cancel.signal);
         status = 200;
         return send(res, 200, answered);
       }
       if (req.method === "POST" && id && action === "retry") {
-        const retried = await opts.service.retry(id, caller);
+        const retried = await opts.service.retry(id, caller, cancel.signal);
         status = 200;
         return send(res, 200, retried);
       }

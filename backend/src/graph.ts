@@ -22,7 +22,7 @@
  * whole state under the consultation id. The next answer resumes it, even in
  * another process, so nothing is re-derived from the transcript.
  */
-import { Annotation, END, START, StateGraph, interrupt, type BaseCheckpointSaver } from "@langchain/langgraph";
+import { Annotation, END, START, StateGraph, interrupt, type BaseCheckpointSaver, type LangGraphRunnableConfig } from "@langchain/langgraph";
 import { guidelineById, retrieve as retrieveGuidelines, type GuidelinePassage } from "./guidelines";
 import { LLMError, type LLM } from "./llm";
 import { plan, type AskedRound, DEFAULT_MAX_ROUNDS } from "./planner";
@@ -116,13 +116,14 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, opts: Gr
   }
 
   /** Update the record from the latest patient turn only (DESIGN.md §8.2). */
-  async function understand(s: State) {
+  async function understand(s: State, config?: LangGraphRunnableConfig) {
     const template = templateOf(s);
     const latest = s.transcript.at(-1)!.content;
     const asked = s.pendingSlotIds.map((id) => findSlot(template, id)).filter((x): x is Slot => !!x);
     const question = s.asked.at(-1)?.text ?? "（开场主诉）";
     const out = await llm.invoke({
       task: "extract",
+      signal: config?.signal,
       schema: extractSchema,
       ...extractPrompt(template, s.record, asked, question, latest),
       context: { template, record: s.record, asked, answer: latest },
@@ -131,11 +132,12 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, opts: Gr
     return { record, rejected, pendingSlotIds: [] };
   }
 
-  async function triage(s: State) {
+  async function triage(s: State, config?: LangGraphRunnableConfig) {
     const template = templateOf(s);
     const latest = s.transcript.at(-1)!.content;
     const out = await llm.invoke({
       task: "triage",
+      signal: config?.signal,
       schema: triageSchema,
       ...triagePrompt(template, s.record, latest),
       context: { text: latest },
@@ -151,11 +153,12 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, opts: Gr
   }
 
   /** Rewrite the next round's questions. Runs alongside triage; skipped when the planner is done. */
-  async function phrase(s: State) {
+  async function phrase(s: State, config?: LangGraphRunnableConfig) {
     const p = plan(templateOf(s), s.record, s.asked, maxRounds);
     if (p.done) return { proposed: null };
     const out = await llm.invoke({
       task: "phrase",
+      signal: config?.signal,
       schema: phraseSchema,
       ...phrasePrompt(p.slots, s.asked.map((r) => r.text)),
       context: { slots: p.slots },
@@ -190,12 +193,13 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, opts: Gr
     return { guidelineIds: hits.map((h) => h.passage.id) };
   }
 
-  async function draft(s: State) {
+  async function draft(s: State, config?: LangGraphRunnableConfig) {
     const template = templateOf(s);
     const passages = passagesOf(s);
     try {
       const note = await llm.invoke({
         task: "note",
+        signal: config?.signal,
         schema: noteSchema,
         ...notePrompt(template, s.record, s.issues, s.note, passages),
         context: { template, record: s.record, complaint: s.complaint, passages },
@@ -208,7 +212,7 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, opts: Gr
     }
   }
 
-  async function check(s: State) {
+  async function check(s: State, config?: LangGraphRunnableConfig) {
     const template = templateOf(s);
     const note = s.note!;
     const issues: string[] = [];
@@ -228,6 +232,7 @@ export function buildGraph(llm: LLM, checkpointer: BaseCheckpointSaver, opts: Gr
     try {
       review = await llm.invoke({
         task: "review",
+        signal: config?.signal,
         schema: reviewSchema,
         ...reviewPrompt(template, s.record, note, passagesOf(s)),
         context: { note },

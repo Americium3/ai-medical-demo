@@ -26,8 +26,11 @@ export interface RecordRow {
 
 export interface ConsultationView {
   id: string;
-  /** "failed": a model call failed after its retries; POST …/retry resumes from the failed step. */
-  status: "awaiting_answer" | "emergency" | "completed" | "failed";
+  /**
+   * "failed": a model call failed after its retries, or the run was cut off; POST …/retry resumes it.
+   * "running": another request for this consultation is being processed right now.
+   */
+  status: "awaiting_answer" | "emergency" | "completed" | "failed" | "running";
   question: string | null;
   level: string;
   record: { answered: number; unknown: number; unasked: number };
@@ -86,12 +89,19 @@ function summarize(node: string, u: Partial<State>): string {
   }
 }
 
-/** The error saved on a failed task, if the last run ended in one. */
-function failureOf(snap: { tasks: readonly { error?: unknown }[] }): string | null {
+/**
+ * Why the last run did not finish, or null if it did: the error saved on a
+ * failed task, or, when the run was cut off (the caller disconnected, #7) with
+ * steps still due and nothing waiting for the patient, that it was interrupted.
+ */
+function failureOf(snap: { next: readonly string[]; tasks: readonly { error?: unknown; interrupts: readonly unknown[] }[] }): string | null {
   const t = snap.tasks.find((x) => x.error);
-  if (!t) return null;
-  const e = t.error as { message?: unknown };
-  return typeof e?.message === "string" ? e.message : String(t.error);
+  if (t) {
+    const e = t.error as { message?: unknown };
+    return typeof e?.message === "string" ? e.message : String(t.error);
+  }
+  if (snap.next.length > 0 && !snap.tasks.some((x) => x.interrupts.length > 0)) return "run interrupted before it finished";
+  return null;
 }
 
 export interface ServiceOptions {
@@ -143,16 +153,17 @@ export class ConsultationService {
     return { configurable: { thread_id: id } };
   }
 
-  private run(id: string, input: unknown): Promise<TraceStep[]> {
-    return consultationScope.run(id, () => this.runInScope(id, input));
+  private run(id: string, input: unknown, signal?: AbortSignal): Promise<TraceStep[]> {
+    return consultationScope.run(id, () => this.runInScope(id, input, signal));
   }
 
-  private async runInScope(id: string, input: unknown): Promise<TraceStep[]> {
+  private async runInScope(id: string, input: unknown, signal?: AbortSignal): Promise<TraceStep[]> {
     const trace: TraceStep[] = [];
     try {
       // Every run of one consultation lands in the same Langfuse session, keyed by its thread_id.
       const callbacks = this.tracing ? [this.tracing.handler(id, { consultationId: id })] : undefined;
-      const stream = await this.graph.stream(input as never, { ...this.config(id), streamMode: "updates", callbacks });
+      // The signal stops the run, and the model call in flight, when the caller goes away.
+      const stream = await this.graph.stream(input as never, { ...this.config(id), streamMode: "updates", callbacks, signal });
       for await (const chunk of stream) {
         for (const [node, update] of Object.entries(chunk as Record<string, unknown>)) {
           if (node === "__interrupt__") continue;
@@ -184,10 +195,12 @@ export class ConsultationService {
     const snap = await this.snapshot(id);
     const s = snap.values as State;
     const waiting = snap.tasks.some((t) => t.interrupts.length > 0);
-    const failure = failureOf(snap);
+    // Steps still due with no error is normal while another request is running them.
+    const running = !waiting && snap.next.length > 0 && !snap.tasks.some((t) => t.error) && (await this.lock.isHeld(id));
+    const failure = running ? null : failureOf(snap);
     return {
       id,
-      status: waiting ? "awaiting_answer" : failure ? "failed" : s.status === "emergency" ? "emergency" : "completed",
+      status: waiting ? "awaiting_answer" : running ? "running" : failure ? "failed" : s.status === "emergency" ? "emergency" : "completed",
       question: waiting ? (s.asked.at(-1)?.text ?? null) : null,
       level: LEVEL_NAME[s.level],
       record: countByStatus(s.record),
@@ -198,38 +211,38 @@ export class ConsultationService {
         quote: s.record[slot.id]?.quote || null,
       })),
       rounds: s.asked.length,
-      output: waiting || failure ? null : s.output,
+      output: waiting || running || failure ? null : s.output,
       error: failure,
       trace,
     };
   }
 
-  async start(complaint: string, owner: string): Promise<ConsultationView> {
+  async start(complaint: string, owner: string, signal?: AbortSignal): Promise<ConsultationView> {
     const id = randomUUID();
-    const trace = await this.run(id, { complaint, owner });
+    const trace = await this.run(id, { complaint, owner }, signal);
     return this.view(id, trace);
   }
 
-  async answer(id: string, text: string, owner: string): Promise<ConsultationView> {
+  async answer(id: string, text: string, owner: string, signal?: AbortSignal): Promise<ConsultationView> {
     await this.owned(id, owner); // another key gets 404 before it can learn the lock is held
     // The state checks run under the lock, so a second answer sees the first one's result.
     return this.exclusive(id, async () => {
       const snap = await this.owned(id, owner);
       if (failureOf(snap)) throw new ConflictError("consultation failed; POST /v1/consultations/:id/retry to resume it");
       if (!snap.tasks.some((t) => t.interrupts.length > 0)) throw new ConflictError("consultation is not waiting for an answer");
-      const trace = await this.run(id, new Command({ resume: text }));
+      const trace = await this.run(id, new Command({ resume: text }), signal);
       return this.view(id, trace);
     });
   }
 
   /** Resume a failed consultation from the step that failed, on the same thread. */
-  async retry(id: string, owner: string): Promise<ConsultationView> {
+  async retry(id: string, owner: string, signal?: AbortSignal): Promise<ConsultationView> {
     await this.owned(id, owner);
     return this.exclusive(id, async () => {
       const snap = await this.owned(id, owner);
       if (!failureOf(snap)) throw new ConflictError("consultation has not failed; nothing to retry");
       // A null input makes LangGraph re-run the errored task from the last checkpoint.
-      const trace = await this.run(id, null);
+      const trace = await this.run(id, null, signal);
       return this.view(id, trace);
     });
   }

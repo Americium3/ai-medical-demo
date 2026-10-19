@@ -102,6 +102,7 @@ export function createMockLLM(overrides: Partial<Record<Task, (ctx: never, n: nu
     kind: "mock",
     usage,
     async invoke<T>(call: StructuredCall<T>): Promise<T> {
+      call.signal?.throwIfAborted();
       const n = counts[call.task] ?? 0;
       counts[call.task] = n + 1;
       const out = overrides[call.task]
