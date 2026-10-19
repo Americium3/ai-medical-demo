@@ -272,6 +272,9 @@ test("Bedrock: offers the tool with auto choice, sends no temperature, validates
     await assert.rejects(llm.invoke({ task: "note", schema: extractSchema, system: "s", user: "u", context: null }), LLMError);
     assert.equal(seen.at(-1)!.path, "/model/smart-model/converse");
     assert.equal(seen.length, 5, "three retries after a reply without a tool call");
+    // A full note runs past 1,500 output tokens on real models and was cut off mid-JSON (#8).
+    assert.equal((seen[0].body!.inferenceConfig as { maxTokens: number }).maxTokens, 1500, "fast tier");
+    assert.equal((seen.at(-1)!.body!.inferenceConfig as { maxTokens: number }).maxTokens, 4096, "smart tier");
   } finally {
     fake.close();
   }

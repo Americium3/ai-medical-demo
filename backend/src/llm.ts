@@ -101,7 +101,8 @@ export interface BedrockOptions {
   region: string;
   fastModelId: string;
   smartModelId: string;
-  maxTokens?: number;
+  /** Output token cap per tier. A note with sources runs past 1,500 tokens on real models. */
+  maxTokens?: { fast: number; smart: number };
   /** Explicit keys; when omitted the AWS SDK's default credential chain is used. */
   credentials?: { accessKeyId: string; secretAccessKey: string };
   /** Injected in tests to point at a local fake endpoint. */
@@ -177,13 +178,14 @@ export class InvalidReplyError extends Error {}
 export function createBedrockLLM(opts: BedrockOptions): LLM {
   const usage: UsageRecord[] = [];
   const models = new Map<string, ChatBedrockConverse>();
+  const maxTokens = opts.maxTokens ?? { fast: 1500, smart: 4096 };
   const modelFor = (id: string) => {
     let m = models.get(id);
     if (!m) {
       m = new ChatBedrockConverse({
         model: id,
         region: opts.region,
-        maxTokens: opts.maxTokens ?? 1500,
+        maxTokens: id === opts.smartModelId ? maxTokens.smart : maxTokens.fast,
         supportsToolChoiceValues: ["auto"],
         ...(opts.credentials ? { credentials: opts.credentials } : {}),
         ...(opts.client ? { client: opts.client } : {}),

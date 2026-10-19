@@ -1,0 +1,1176 @@
+{
+  "meta": {
+    "date": "2026-10-19T00:57:50.692Z",
+    "mode": "bedrock",
+    "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    "label": "bedrock",
+    "cases": 72
+  },
+  "results": [
+    {
+      "id": "rf-01",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1086,
+      "outputTokens": 260,
+      "ms": 2642
+    },
+    {
+      "id": "rf-02",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 215,
+      "ms": 2236
+    },
+    {
+      "id": "rf-03",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1085,
+      "outputTokens": 223,
+      "ms": 2615
+    },
+    {
+      "id": "rf-04",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1083,
+      "outputTokens": 219,
+      "ms": 1977
+    },
+    {
+      "id": "rf-05",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 1,
+      "rules": [
+        "抽搐"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 202,
+      "ms": 2130
+    },
+    {
+      "id": "rf-06",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1160,
+      "outputTokens": 174,
+      "ms": 1990
+    },
+    {
+      "id": "rf-07",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 1,
+      "rules": [
+        "消化道大出血"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 182,
+      "ms": 1809
+    },
+    {
+      "id": "rf-08",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1083,
+      "outputTokens": 212,
+      "ms": 2225
+    },
+    {
+      "id": "rf-09",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound",
+        "question-form"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1087,
+      "outputTokens": 199,
+      "ms": 2278
+    },
+    {
+      "id": "rf-10",
+      "kind": "redflag",
+      "tags": [
+        "contrast-clause"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1143,
+      "outputTokens": 207,
+      "ms": 2118
+    },
+    {
+      "id": "rf-11",
+      "kind": "redflag",
+      "tags": [
+        "multi-turn"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1079,
+      "outputTokens": 224,
+      "ms": 2286
+    },
+    {
+      "id": "rf-12",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1085,
+      "outputTokens": 221,
+      "ms": 2091
+    },
+    {
+      "id": "rf-13",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 230,
+      "ms": 2167
+    },
+    {
+      "id": "rf-14",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 212,
+      "ms": 2159
+    },
+    {
+      "id": "rf-15",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1087,
+      "outputTokens": 250,
+      "ms": 2258
+    },
+    {
+      "id": "rf-16",
+      "kind": "redflag",
+      "tags": [
+        "contrast-clause"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1148,
+      "outputTokens": 202,
+      "ms": 2020
+    },
+    {
+      "id": "rf-17",
+      "kind": "redflag",
+      "tags": [
+        "multi-turn"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1138,
+      "outputTokens": 224,
+      "ms": 2194
+    },
+    {
+      "id": "rf-18",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 223,
+      "ms": 2135
+    },
+    {
+      "id": "rf-19",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "胸痛伴大汗或持续不缓解"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1181,
+      "outputTokens": 190,
+      "ms": 1989
+    },
+    {
+      "id": "rf-20",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "胸痛伴大汗或持续不缓解"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1174,
+      "outputTokens": 192,
+      "ms": 2185
+    },
+    {
+      "id": "rf-21",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "卒中征象"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1087,
+      "outputTokens": 181,
+      "ms": 1798
+    },
+    {
+      "id": "rf-22",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "卒中征象"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 202,
+      "ms": 1943
+    },
+    {
+      "id": "rf-23",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "卒中征象"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 213,
+      "ms": 2167
+    },
+    {
+      "id": "rf-24",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "抽搐"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 213,
+      "ms": 2305
+    },
+    {
+      "id": "rf-25",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 1,
+      "rules": [
+        "消化道大出血"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 156,
+      "ms": 1529
+    },
+    {
+      "id": "rf-26",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 208,
+      "ms": 2003
+    },
+    {
+      "id": "rf-27",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 1,
+      "rules": [
+        "突发剧烈头痛"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1166,
+      "outputTokens": 203,
+      "ms": 2099
+    },
+    {
+      "id": "rf-28",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 3,
+      "rules": [
+        "突发剧烈头痛"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1167,
+      "outputTokens": 191,
+      "ms": 1899
+    },
+    {
+      "id": "rf-29",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 2,
+      "rules": [
+        "自伤风险"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1080,
+      "outputTokens": 198,
+      "ms": 2017
+    },
+    {
+      "id": "rf-30",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 2,
+      "modelLevel": 1,
+      "rules": [
+        "自伤风险"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1078,
+      "outputTokens": 128,
+      "ms": 1347
+    },
+    {
+      "id": "rf-31",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 1,
+      "modelLevel": 1,
+      "rules": [
+        "意识丧失或呼吸停止"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 171,
+      "ms": 1781
+    },
+    {
+      "id": "rf-32",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 1,
+      "modelLevel": 1,
+      "rules": [
+        "意识丧失或呼吸停止"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1085,
+      "outputTokens": 172,
+      "ms": 1921
+    },
+    {
+      "id": "rf-33",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedLevel": 1,
+      "modelLevel": 1,
+      "rules": [
+        "意识丧失或呼吸停止"
+      ],
+      "level": 1,
+      "calls": 1,
+      "inputTokens": 1083,
+      "outputTokens": 151,
+      "ms": 1704
+    },
+    {
+      "id": "rf-34",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedLevel": 3,
+      "modelLevel": 3,
+      "rules": [
+        "活动相关胸闷胸痛"
+      ],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1172,
+      "outputTokens": 237,
+      "ms": 2481
+    },
+    {
+      "id": "rf-35",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedLevel": 3,
+      "modelLevel": 3,
+      "rules": [
+        "高热"
+      ],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1139,
+      "outputTokens": 161,
+      "ms": 1731
+    },
+    {
+      "id": "rf-36",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedLevel": 3,
+      "modelLevel": 2,
+      "rules": [
+        "黑便"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 194,
+      "ms": 1919
+    },
+    {
+      "id": "rf-37",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedLevel": 3,
+      "modelLevel": 4,
+      "rules": [
+        "不明原因体重下降"
+      ],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 228,
+      "ms": 2539
+    },
+    {
+      "id": "rf-38",
+      "kind": "redflag",
+      "tags": [
+        "urgent",
+        "non-negating-compound"
+      ],
+      "expectedLevel": 3,
+      "modelLevel": 2,
+      "rules": [
+        "黑便"
+      ],
+      "level": 2,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 200,
+      "ms": 1958
+    },
+    {
+      "id": "neg-01",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 398,
+      "ms": 3384
+    },
+    {
+      "id": "neg-02",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1181,
+      "outputTokens": 179,
+      "ms": 1793
+    },
+    {
+      "id": "neg-03",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1173,
+      "outputTokens": 363,
+      "ms": 3621
+    },
+    {
+      "id": "neg-04",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1079,
+      "outputTokens": 448,
+      "ms": 4065
+    },
+    {
+      "id": "neg-05",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 249,
+      "ms": 2466
+    },
+    {
+      "id": "neg-06",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1159,
+      "outputTokens": 271,
+      "ms": 2843
+    },
+    {
+      "id": "neg-07",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1078,
+      "outputTokens": 198,
+      "ms": 2117
+    },
+    {
+      "id": "neg-08",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1086,
+      "outputTokens": 167,
+      "ms": 1770
+    },
+    {
+      "id": "neg-09",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 258,
+      "ms": 2312
+    },
+    {
+      "id": "neg-10",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 346,
+      "ms": 3056
+    },
+    {
+      "id": "neg-11",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 167,
+      "ms": 1898
+    },
+    {
+      "id": "neg-12",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1078,
+      "outputTokens": 279,
+      "ms": 2791
+    },
+    {
+      "id": "neg-13",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1078,
+      "outputTokens": 292,
+      "ms": 2682
+    },
+    {
+      "id": "neg-14",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 375,
+      "ms": 3530
+    },
+    {
+      "id": "neg-15",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 278,
+      "ms": 4493
+    },
+    {
+      "id": "neg-16",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 191,
+      "ms": 1924
+    },
+    {
+      "id": "neg-17",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1084,
+      "outputTokens": 258,
+      "ms": 2539
+    },
+    {
+      "id": "neg-18",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1085,
+      "outputTokens": 193,
+      "ms": 3958
+    },
+    {
+      "id": "neg-19",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "multi-turn"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1172,
+      "outputTokens": 213,
+      "ms": 2376
+    },
+    {
+      "id": "rt-01",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1144,
+      "outputTokens": 199,
+      "ms": 1994
+    },
+    {
+      "id": "rt-02",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1160,
+      "outputTokens": 239,
+      "ms": 2204
+    },
+    {
+      "id": "rt-03",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1090,
+      "outputTokens": 198,
+      "ms": 2244
+    },
+    {
+      "id": "rt-04",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1081,
+      "outputTokens": 179,
+      "ms": 2205
+    },
+    {
+      "id": "rt-05",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1080,
+      "outputTokens": 426,
+      "ms": 3608
+    },
+    {
+      "id": "rt-06",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1083,
+      "outputTokens": 189,
+      "ms": 1950
+    },
+    {
+      "id": "rt-07",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1162,
+      "outputTokens": 197,
+      "ms": 2106
+    },
+    {
+      "id": "rt-08",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1078,
+      "outputTokens": 210,
+      "ms": 2011
+    },
+    {
+      "id": "rt-09",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1085,
+      "outputTokens": 203,
+      "ms": 1909
+    },
+    {
+      "id": "rt-10",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1086,
+      "outputTokens": 189,
+      "ms": 1863
+    },
+    {
+      "id": "rt-11",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 3,
+      "rules": [],
+      "level": 3,
+      "calls": 1,
+      "inputTokens": 1171,
+      "outputTokens": 218,
+      "ms": 2084
+    },
+    {
+      "id": "rt-12",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1136,
+      "outputTokens": 187,
+      "ms": 1932
+    },
+    {
+      "id": "rt-13",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1140,
+      "outputTokens": 179,
+      "ms": 1701
+    },
+    {
+      "id": "rt-14",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1165,
+      "outputTokens": 228,
+      "ms": 2600
+    },
+    {
+      "id": "rt-15",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedLevel": 4,
+      "modelLevel": 4,
+      "rules": [],
+      "level": 4,
+      "calls": 1,
+      "inputTokens": 1082,
+      "outputTokens": 203,
+      "ms": 2019
+    }
+  ]
+}

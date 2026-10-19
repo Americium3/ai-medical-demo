@@ -83,7 +83,9 @@ interface TurnResult {
 
 interface ScenarioResult {
   id: string;
+  /** "failed": a model call failed after its retries; the turns before it are kept. */
   status: ConsultationView["status"];
+  error?: string;
   turns: TurnResult[];
   calls: number;
   costUsd: number;
@@ -103,17 +105,29 @@ async function scenario(service: ConsultationService, id: string, opening: strin
     before = { calls: u.calls, cost: u.costUsd ?? 0 };
     return v;
   };
-  let v = await measure("first", () => service.start(opening, "bench"));
-  while (v.status === "awaiting_answer") {
-    const text = await reply(v);
-    const cur = v;
-    v = await measure("follow-up", () => service.answer(cur.id, text, "bench"));
+  let consultationId: string | undefined;
+  let status: ConsultationView["status"];
+  let error: string | undefined;
+  try {
+    let v = await measure("first", () => service.start(opening, "bench"));
+    consultationId = v.id;
+    while (v.status === "awaiting_answer") {
+      const text = await reply(v);
+      const cur = v;
+      v = await measure("follow-up", () => service.answer(cur.id, text, "bench"));
+    }
+    status = v.status;
+  } catch (err) {
+    // One failed consultation should not throw away the others' numbers.
+    status = "failed";
+    error = err instanceof Error ? err.message : String(err);
+    consultationId ??= (err as { id?: string }).id;
   }
-  const records = service.usage.filter((r) => r.consultationId === v.id);
+  const records = service.usage.filter((r) => r.consultationId === consultationId);
   const inputTokensByTask: Record<string, number> = {};
   for (const r of records) inputTokensByTask[r.task] = Math.max(inputTokensByTask[r.task] ?? 0, r.inputTokens);
   const total = summarizeUsage(records);
-  return { id, status: v.status, turns, calls: total.calls, costUsd: total.costUsd ?? 0, inputTokensByTask };
+  return { id, status, error, turns, calls: total.calls, costUsd: total.costUsd ?? 0, inputTokensByTask };
 }
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
@@ -139,7 +153,7 @@ function summarize(results: ScenarioResult[]): string {
     "",
     "| 场景 | 结果 | 轮数 | 模型调用 | 成本/次 |",
     "|---|---|---|---|---|",
-    ...results.map((r) => `| ${r.id} | ${r.status} | ${r.turns.length} | ${r.calls} | $${r.costUsd.toFixed(4)} |`),
+    ...results.map((r) => `| ${r.id} | ${r.status}${r.error ? `（${r.error.slice(0, 60)}）` : ""} | ${r.turns.length} | ${r.calls} | $${r.costUsd.toFixed(4)} |`),
     `| **平均** | | ${mean(results.map((r) => r.turns.length)).toFixed(1)} | ${mean(results.map((r) => r.calls)).toFixed(1)} | $${mean(results.map((r) => r.costUsd)).toFixed(4)} |`,
     "",
     `单次调用的最大输入 tokens（估算）：${Object.entries(maxTokens).map(([k, n]) => `${k} ${n}`).join("，")}`,
