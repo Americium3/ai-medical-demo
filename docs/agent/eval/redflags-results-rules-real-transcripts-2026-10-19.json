@@ -1,9 +1,9 @@
 {
   "meta": {
-    "date": "2026-10-19T01:37:27.668Z",
+    "date": "2026-10-19T02:32:40.668Z",
     "mode": "rules",
     "label": "real-transcripts",
-    "cases": 79
+    "cases": 81
   },
   "results": [
     {
@@ -1049,6 +1049,33 @@
       "level": 2,
       "expectedLevel": 2,
       "outcome": "hit"
+    },
+    {
+      "id": "neg-r5",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-r6",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-filler",
+        "denial-list"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
     }
   ]
 }

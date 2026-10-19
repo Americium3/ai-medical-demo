@@ -10,8 +10,8 @@
  *   2. Words that contain 不/无/没 but do not negate (不时, 无缘无故, 是不是, ...)
  *      are masked first.
  *   3. A denial cue must sit directly before the symptom, with at most a short
- *      filler from a fixed list in between: 否认有明显的呼吸困难 is a denial,
- *      不时呼吸困难 is not.
+ *      filler from a fixed list in between: 否认有明显的呼吸困难, 没有特别觉得喘不上气
+ *      and 没注意到吐血 are denials, 不时呼吸困难 is not.
  *   4. A strong denial (没有/没/无/未/否认, not 不) also covers the later items
  *      of a short list: 没有喘不上气、呼吸困难 and 没有感觉喘不上气或者呼吸困难
  *      deny both. 不想吃饭和呼吸困难 does not deny the second item.
@@ -37,7 +37,7 @@ const CLAUSE_BREAK = /[，。,.!！?？；;：:\n]|但是|但|可是|不过|却/
 /** Contain a negation character but do not deny anything. Longest first. */
 const NON_NEGATING = /不知不觉|无缘无故|毫无征兆|没完没了|止不住|不知道|不舒服|受不了|是不是|不时|不停|不断|不止|无力/g;
 
-const FILLER = "(?:有|出现|感到|觉得|感觉|出|明显的?|什么){0,3}";
+const FILLER = "(?:有|出现|感到|觉得|感觉|出|明显的?|什么|特别|太|注意到|发现){0,3}";
 /** Earlier items of a list, each ending in a list word: 喘不上气、 / 喘不上气或者 */
 const LIST_ITEMS = "(?:[^，。,.!！?？；;：:\\n]{1,8}?(?:、|或者|或是|或|和|以及|及))*";
 

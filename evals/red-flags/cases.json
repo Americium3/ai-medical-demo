@@ -1121,5 +1121,36 @@
     "tags": [
       "denial-list"
     ]
+  },
+  {
+    "id": "neg-r5",
+    "kind": "denial",
+    "turns": [
+      "最近没有特别觉得喘不上气或者呼吸困难，只是有点胸闷，深呼吸时右边有点疼。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-filler"
+    ]
+  },
+  {
+    "id": "neg-r6",
+    "kind": "denial",
+    "turns": [
+      "这些我都没有，没注意到吐血、大便发黑，也没有肚子厉害疼或者疼得一直缓解不了的情况。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-filler",
+      "denial-list"
+    ]
   }
 ]
