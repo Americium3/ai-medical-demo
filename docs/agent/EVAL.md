@@ -116,8 +116,8 @@ npx tsx scripts/eval-red-flags.ts --model                    # backend 分级节
 在 6 个演示病例上跑 backend 的完整问诊：
 
 - **agent**：Bedrock 上的 Claude，快档负责提取、分级、改写问题，慢档负责写病历、自查。
-- **模拟患者**：AI Gateway 上的 `openai/gpt-4o-mini`。
-- **裁判**：AI Gateway 上的 `deepseek/deepseek-chat`。三者属于三个不同的模型家族，脚本会检查。
+- **模拟患者**：默认是 Bedrock 上的 Amazon Nova Pro（`bedrock:us.amazon.nova-pro-v1:0`）。
+- **裁判**：默认是 Bedrock 上的 DeepSeek V3.1（`bedrock:deepseek.v3-v1:0`）。三者属于三个不同的模型家族，脚本会检查。也可以传 AI Gateway 的模型 id。
 - **评分**：裁判**对照实际发生的对话**评价病历的完整性和准确性，并逐条列出找不到依据的陈述。不对照标准诊断，因为 backend 本来就不写诊断。
 
 每次问诊都记录：模型调用次数、输入/输出 tokens、成本、模型耗时、端到端耗时、追问轮数、原话校验丢弃数。
@@ -127,13 +127,58 @@ npx tsx scripts/eval-red-flags.ts --model                    # backend 分级节
 
 ```bash
 npx tsx scripts/eval-backend.ts --mock     # 离线
-npx tsx scripts/eval-backend.ts --runs 3   # 需要 BEDROCK_* 和 AI_GATEWAY_API_KEY
+npx tsx scripts/eval-backend.ts --runs 3   # 需要 BEDROCK_ACCESS_KEY_ID / BEDROCK_SECRET_ACCESS_KEY
 ```
 
 | 运行 | 结果 |
 |---|---|
-| 真实 Bedrock | **待运行：需要密钥** |
+| 真实 Bedrock | 见下面「真实 Bedrock 评测」 |
 | 离线 mock（[summary](eval/backend-summary-mock-2026-10-18.md)） | 6/6 跑通，平均 3.5 轮、14.5 次调用。mock 没有 tokens，也不定价，所以成本列为空。mock 裁判只看患者原话有没有进入病历，数字只说明流程是通的 |
+
+## 真实 Bedrock 评测（2026-10-19）
+
+条件：us-east-2；agent 快档 Claude Haiku 4.5、慢档 Claude Sonnet 4.6；模拟患者 Amazon Nova Pro；裁判 DeepSeek V3.1；6 个演示病例 × 3 次。成本按 Anthropic 标价估算。
+
+### 完整问诊（最终一轮，[追问改写](eval/backend-summary-bedrock-2026-10-19.md) / [模板问法](eval/backend-summary-bedrock-template-2026-10-19.md)）
+
+| | 成功 | 完整性 | 准确性 | 无依据陈述（条/次） | 模型调用 | 成本/次 | 端到端耗时 | 引用覆盖率 | 引用准确率 |
+|---|---|---|---|---|---|---|---|---|---|
+| 模型改写追问 | 17/18 | 83.8 | 86.9 | 4.4 | 16.1 | $0.145 | 62s | 100% | 87.1% |
+| 模板问法 | 18/18 | **92.5** | **92.2** | 3.7 | 13.6 | $0.147 | 63s | 100% | 85.4% |
+
+只看正常完成的问诊（三轮都算）：两种问法的完整性和准确性基本相同（最终一轮 92.3 / 95.2 对 92.9 / 94.1），模板问法每次问诊少 3～4 次模型调用。因此默认改为模板问法（`AGENT_PHRASING=model` 可以切回）。表里模型改写的平均分偏低，是因为有两次被规则误判成急诊（已修复，见下）。
+
+### 危险信号分级（[summary](eval/redflags-summary-model-bedrock-2026-10-19.md)，79 条用例，Haiku 4.5）
+
+| | 仅模型 | 模型 + 规则（图里实际用的） |
+|---|---|---|
+| 危险信号召回（等级不低于期望） | 68.3% | **100%** |
+| 否认、普通主诉被判急诊 | 0% | 0% |
+| 等级完全一致 | 57.0% | 73.4% |
+
+模型单独会漏判、低判三分之一的危险信号，规则兜底后全部识别。
+
+### 每轮延迟（#10，[优化前](eval/latency-summary-bedrock-before-2026-10-19.md) / [优化后](eval/latency-summary-bedrock-after-2026-10-19.md) / [模板问法](eval/latency-summary-bedrock-after-template-2026-10-19.md)）
+
+同样的 8 个场景、同样的脚本患者，在真实 Bedrock 上：
+
+| | 追问轮平均耗时 | 追问轮调用 | 追问轮成本 | 结束轮（写病历和自查） | 开场即急诊 |
+|---|---|---|---|---|---|
+| 优化前（串行） | 4.74s | 3 | $0.0064 | 41.3s | 2 次调用 |
+| 并行改写 | **3.54s（-25%）** | 3 | $0.0064 | 37.9s | **0 次** |
+| 模板问法 | **3.51s（-26%）** | **2** | **$0.0049（-24%）** | 39.3s | 0 次 |
+
+结束轮最慢：慢档写病历加自查，自查不通过还要重写，P90 超过 1 分钟。这是下一步优化的重点。
+
+### 真实评测发现并已修复的问题
+
+- 规则把否认误判成危险信号，问诊被提前结束：否认覆盖一串症状（「没有喘不上气、呼吸困难」「没有出现嘴歪、一边手脚没力气，或者说话不清楚」）、否认词和症状之间隔着「特别」「注意到」「到」「出」。这些原话都加进了 `evals/red-flags/cases.json`（现在 85 条，召回 42/42，否认误报 0/28）；`tests/red-flags.test.ts` 会把三轮真实评测的全部患者原话重放一遍，确认不再触发Ⅰ、Ⅱ级规则。
+- 「头痛…伴眩晕、恶心」被分到腹痛模板：现在按最先说到的症状选模板。
+- 慢档写病历偶尔把嵌套对象写成带未转义引号的 JSON 字符串，重试也失败：现在先修复再校验，并要求文本用「」。病历的输出上限也从 1500 提到 4096 tokens。
+
+前两轮的结果保留在 `eval/*bedrock-run1*`、`eval/*bedrock-run2*`。最终一轮之后修复的规则用真实原话离线验证（规则是确定性的）。
+
+已知局限：每个病例只跑 3 次；裁判也是模型；模拟患者偶尔把 `</thinking>` 之类的标记带进回答；36 次问诊里有 1 次快档模型连续 4 次没有调用工具（问诊标记为失败，可以重试）。
 
 ## CrewAI 对照（Phase 5）
 

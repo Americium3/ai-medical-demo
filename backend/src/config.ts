@@ -32,7 +32,10 @@ export interface Config {
   apiKeys: string[];
   ratePerMinute: number;
   dailyConsultations: number;
-  /** "model" rewrites follow-up questions (in parallel with triage); "template" asks the template wording. */
+  /**
+   * "template" (default) asks the template wording; "model" rewrites follow-up questions in parallel
+   * with triage. On real Bedrock the two scored the same and template saves a call per turn (#10).
+   */
   phrasing: "model" | "template";
   /** Langfuse tracing; null unless LANGFUSE_PUBLIC_KEY, LANGFUSE_SECRET_KEY and LANGFUSE_BASE_URL are set. */
   tracing: TracingOptions | null;
@@ -62,7 +65,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     apiKeys: (env.API_KEYS ?? "").split(",").map((k) => k.trim()).filter(Boolean),
     ratePerMinute: Number(env.RATE_LIMIT_PER_MINUTE ?? 30),
     dailyConsultations: Number(env.DAILY_CONSULTATION_LIMIT ?? 200),
-    phrasing: env.AGENT_PHRASING === "template" ? "template" : "model",
+    phrasing: env.AGENT_PHRASING === "model" ? "model" : "template",
     tracing: tracingOptionsFromEnv(env),
   };
   return cfg;

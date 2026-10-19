@@ -29,24 +29,23 @@ setup → screen ─┬─ 规则命中Ⅰ级或Ⅱ级 → emergency（不调用
 ```
 
 - `screen`：每轮先用正则规则检查患者说过的话，命中Ⅰ、Ⅱ级直接进急诊，不调用模型。
-- `triage` 和 `phrase`（改写追问措辞）并行。`AGENT_PHRASING=template` 时不改写，直接用模板问法，每轮少一次调用。
+- 默认直接用模板问法（`AGENT_PHRASING=template`）。设为 `model` 时由快档模型改写追问措辞，`phrase` 和 `triage` 并行。真实 Bedrock 上两种问法的病历质量相同，模板问法每轮少一次调用。
 
 - `retrieve`：问完以后检索诊疗指南（见下面「指南检索」）。
 
 ### 每轮延迟和成本（#10）
 
-`npx tsx scripts/bench-latency.ts` 跑 6 个演示病例和 2 个急诊场景。没有 Bedrock 密钥时，每次模型调用按假设的首字延迟和输出速度真实等待，tokens 按字符估算，按 Haiku 4.5 / Sonnet 4.6 标价计费。调用次数是准确的，秒数和美元是估算。
+`npx tsx scripts/bench-latency.ts --bedrock` 在真实 Bedrock 上跑 6 个演示病例和 2 个急诊场景（不加 `--bedrock` 时用模拟计时）：
 
-| | 追问轮平均耗时 | 追问轮调用 | 追问轮成本 | 每次问诊调用 | 每次问诊成本 | 开场即急诊 |
-|---|---|---|---|---|---|---|
-| 优化前（串行） | 2.92s | 3 | $0.00337 | 11.8 | $0.0190 | 2 次调用 |
-| 并行改写（默认） | 2.05s（-30%） | 3 | $0.00337 | 11.3 | $0.0184 | 0 次调用 |
-| 模板问法 | 1.93s（-34%） | 2 | $0.00240（-29%） | 8.5 | $0.0158（-17%） | 0 次调用 |
+| | 追问轮平均耗时 | 追问轮调用 | 追问轮成本 | 开场即急诊 |
+|---|---|---|---|---|
+| 优化前（串行） | 4.74s | 3 | $0.0064 | 2 次调用 |
+| 并行改写 | 3.54s（-25%） | 3 | $0.0064 | 0 次调用 |
+| 模板问法（默认） | 3.51s（-26%） | 2 | $0.0049（-24%） | 0 次调用 |
 
-明细在 `docs/agent/eval/latency-summary-simulated-*.md`。
+一次完整问诊约 $0.15、60 秒左右，其中写病历和自查占 35～40 秒。完整的真实评测见 `docs/agent/EVAL.md` 的「真实 Bedrock 评测」。
 
-- 待运行：需要密钥。真实 Bedrock 的数字用 `npx tsx scripts/bench-latency.ts --bedrock` 测。要决定是否去掉改写，用 `npx tsx scripts/eval-backend.ts --phrasing template` 和默认的 `--phrasing model` 各跑一次，比较完整性和准确性。
-- 提示缓存暂不开启：单次调用的输入最多约 1.1K tokens（估算），而 Haiku 4.5 至少 4096 tokens 才能缓存，Sonnet 4.6 至少 1024 tokens，并且记录表每轮都在变，固定的前缀只有几百 tokens。快档换成 Haiku 5.5（最低 512 tokens）后再评估。
+- 提示缓存暂不开启：快档单次调用的输入最多约 1.7K tokens，低于 Haiku 4.5 的 4096 门槛；慢档的输入有 3～4K tokens，但其中固定的前缀（系统提示和工具定义）不到 1024 tokens，达不到 Sonnet 4.6 的门槛。快档换成 Haiku 5.5（最低 512 tokens）后再评估。
 
 ### 指南检索（#12）
 
@@ -111,7 +110,7 @@ npm run backend:cli -- --case cardio-001
 ### 真实Bedrock的测试情况
 
 - PR #2：在本地对真实的Bedrock模型（us-east-2，Haiku 4.5 + Sonnet 4.6）回放一段真实的患者对话，完整跑了10次，10次都生成了病历。
-- 之后阶段一和阶段二的改动（规则前置、并行改写、指南检索、失败重试等）只在离线替身和本地模拟的Bedrock接口上验证过，还没有在真实Bedrock上重跑。延迟、成本和引用准确率的真实数字待运行：需要密钥。
+- 2026-10-19：在真实Bedrock上跑了完整评测（6个病例 × 3次 × 两种问法，三轮），以及危险信号分级和延迟对比，结果见 `docs/agent/EVAL.md` 的「真实 Bedrock 评测」。
 
 ### 默认模型
 
@@ -240,7 +239,7 @@ LANGFUSE_PUBLIC_KEY=pk-lf-... LANGFUSE_SECRET_KEY=sk-lf-... LANGFUSE_BASE_URL=ht
 | `BEDROCK_REGION` | Bedrock所在区域 | `us-east-2` |
 | `BEDROCK_FAST_MODEL_ID` | 快档模型ID | `us.anthropic.claude-haiku-4-5-20251001-v1:0` |
 | `BEDROCK_SMART_MODEL_ID` | 慢档模型ID | `us.anthropic.claude-sonnet-4-6` |
-| `AGENT_PHRASING` | `model`：追问措辞由快档模型改写（与分级并行）；`template`：直接用模板问法 | `model` |
+| `AGENT_PHRASING` | `template`：直接用模板问法；`model`：追问措辞由快档模型改写（与分级并行） | `template` |
 | `DB_PATH` | 问诊状态的保存位置（SQLite） | `backend/data/consultations.sqlite` |
 | `DATABASE_URL` 或 `PGHOST`/`PGUSER`/`PGPASSWORD`/`PGDATABASE`/`PGSSLMODE` | 设置后问诊状态存 PostgreSQL，`DB_PATH` 不再使用 | 无（用 SQLite） |
 | `REDIS_URL` | 设置后问诊锁和限流存 Redis（`rediss://` 表示 TLS） | 无（存内存） |
@@ -265,7 +264,7 @@ PostgreSQL 和 Redis 的集成测试不在上面的测试里，需要两个服�
 
 ## 九、已知限制
 
-1. 真实Bedrock只在PR #2时跑过10次完整问诊，之后的改动还没在真实Bedrock上重跑（见「真实Bedrock的测试情况」）。
+1. 真实评测的样本还小：6个病例，每个3次，裁判也是模型。
 2. 离线替身模型的判断很粗糙，只用于演示流程。
 3. 不设置 `DATABASE_URL` 和 `REDIS_URL` 时，状态存在SQLite里，限流计数和问诊锁存在内存里，只适合单个实例。
 4. 规划器的停止条件做了简化：必填项和鉴别要点都有结果、或达到轮数上限即停止，暂未判断“可能诊断是否连续两轮不变”。
