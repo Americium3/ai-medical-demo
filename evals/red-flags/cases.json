@@ -1018,5 +1018,108 @@
     "tags": [
       "routine"
     ]
+  },
+  {
+    "id": "neg-r1",
+    "kind": "denial",
+    "turns": [
+      "没有喘不上气、呼吸困难的感觉。除了咳嗽、发烧和胸闷，没有别的不舒服。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-list"
+    ]
+  },
+  {
+    "id": "neg-r2",
+    "kind": "denial",
+    "turns": [
+      "没有感觉喘不上气或者呼吸困难。除了咳嗽、发烧和胸闷，没有别的不舒服的地方。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-list"
+    ]
+  },
+  {
+    "id": "neg-r3",
+    "kind": "denial",
+    "turns": [
+      "稍微有点胸闷，但没有喘不上气、呼吸困难的感觉。以前没有什么特别的病史，也没有药物过敏。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-list"
+    ]
+  },
+  {
+    "id": "neg-r4",
+    "kind": "denial",
+    "turns": [
+      "胸口不舒服的时候没有出大汗，也没有喘不上气。休息时胸痛不会持续二十分钟以上。"
+    ],
+    "expect": {
+      "rule": null,
+      "level": 4
+    },
+    "tags": [
+      "real-transcript",
+      "denial-filler"
+    ]
+  },
+  {
+    "id": "rf-r1",
+    "kind": "redflag",
+    "turns": [
+      "没有发烧，就是喘不上气"
+    ],
+    "expect": {
+      "rule": "呼吸困难",
+      "level": 2
+    },
+    "tags": [
+      "real-transcript",
+      "denial-list"
+    ]
+  },
+  {
+    "id": "rf-r2",
+    "kind": "redflag",
+    "turns": [
+      "不想吃饭，呼吸困难"
+    ],
+    "expect": {
+      "rule": "呼吸困难",
+      "level": 2
+    },
+    "tags": [
+      "denial-list"
+    ]
+  },
+  {
+    "id": "rf-r3",
+    "kind": "redflag",
+    "turns": [
+      "不想吃饭和呼吸困难"
+    ],
+    "expect": {
+      "rule": "呼吸困难",
+      "level": 2
+    },
+    "tags": [
+      "denial-list"
+    ]
   }
 ]

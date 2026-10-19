@@ -1,0 +1,1054 @@
+{
+  "meta": {
+    "date": "2026-10-19T01:37:27.668Z",
+    "mode": "rules",
+    "label": "real-transcripts",
+    "cases": 79
+  },
+  "results": [
+    {
+      "id": "rf-01",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-02",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "意识改变或晕厥",
+      "hits": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-03",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "意识改变或晕厥",
+      "hits": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-04",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "意识改变或晕厥",
+      "hits": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-05",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "抽搐",
+      "hits": [
+        "抽搐"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-06",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "消化道大出血",
+      "hits": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-07",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "消化道大出血",
+      "hits": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-08",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "意识改变或晕厥",
+      "hits": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-09",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound",
+        "question-form"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-10",
+      "kind": "redflag",
+      "tags": [
+        "contrast-clause"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-11",
+      "kind": "redflag",
+      "tags": [
+        "multi-turn"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-12",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-13",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-14",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "消化道大出血",
+      "hits": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-15",
+      "kind": "redflag",
+      "tags": [
+        "non-negating-compound"
+      ],
+      "expectedRule": "意识改变或晕厥",
+      "hits": [
+        "意识改变或晕厥"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-16",
+      "kind": "redflag",
+      "tags": [
+        "contrast-clause"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-17",
+      "kind": "redflag",
+      "tags": [
+        "multi-turn"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-18",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-19",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "胸痛伴大汗或持续不缓解",
+      "hits": [
+        "胸痛伴大汗或持续不缓解"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-20",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "胸痛伴大汗或持续不缓解",
+      "hits": [
+        "胸痛伴大汗或持续不缓解"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-21",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "卒中征象",
+      "hits": [
+        "卒中征象"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-22",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "卒中征象",
+      "hits": [
+        "卒中征象"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-23",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "卒中征象",
+      "hits": [
+        "卒中征象"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-24",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "抽搐",
+      "hits": [
+        "抽搐"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-25",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "消化道大出血",
+      "hits": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-26",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "消化道大出血",
+      "hits": [
+        "消化道大出血"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-27",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "突发剧烈头痛",
+      "hits": [
+        "突发剧烈头痛"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-28",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "突发剧烈头痛",
+      "hits": [
+        "突发剧烈头痛"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-29",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "自伤风险",
+      "hits": [
+        "自伤风险"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-30",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "自伤风险",
+      "hits": [
+        "自伤风险"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-31",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "意识丧失或呼吸停止",
+      "hits": [
+        "意识丧失或呼吸停止"
+      ],
+      "level": 1,
+      "expectedLevel": 1,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-32",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "意识丧失或呼吸停止",
+      "hits": [
+        "意识丧失或呼吸停止"
+      ],
+      "level": 1,
+      "expectedLevel": 1,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-33",
+      "kind": "redflag",
+      "tags": [
+        "plain"
+      ],
+      "expectedRule": "意识丧失或呼吸停止",
+      "hits": [
+        "意识丧失或呼吸停止"
+      ],
+      "level": 1,
+      "expectedLevel": 1,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-34",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedRule": "活动相关胸闷胸痛",
+      "hits": [
+        "活动相关胸闷胸痛"
+      ],
+      "level": 3,
+      "expectedLevel": 3,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-35",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedRule": "高热",
+      "hits": [
+        "高热"
+      ],
+      "level": 3,
+      "expectedLevel": 3,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-36",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedRule": "黑便",
+      "hits": [
+        "黑便"
+      ],
+      "level": 3,
+      "expectedLevel": 3,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-37",
+      "kind": "redflag",
+      "tags": [
+        "urgent"
+      ],
+      "expectedRule": "不明原因体重下降",
+      "hits": [
+        "不明原因体重下降"
+      ],
+      "level": 3,
+      "expectedLevel": 3,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-38",
+      "kind": "redflag",
+      "tags": [
+        "urgent",
+        "non-negating-compound"
+      ],
+      "expectedRule": "黑便",
+      "hits": [
+        "黑便"
+      ],
+      "level": 3,
+      "expectedLevel": 3,
+      "outcome": "hit"
+    },
+    {
+      "id": "neg-01",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-02",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-03",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-04",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-05",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-06",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-07",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-08",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-09",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-10",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-11",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-12",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-13",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-14",
+      "kind": "denial",
+      "tags": [
+        "denial"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-15",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-16",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-17",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-18",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-19",
+      "kind": "denial",
+      "tags": [
+        "denial",
+        "multi-turn"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-01",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-02",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-03",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-04",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-05",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-06",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-07",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-08",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-09",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-10",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-11",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-12",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-13",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-14",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rt-15",
+      "kind": "routine",
+      "tags": [
+        "routine"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-r1",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-list"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-r2",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-list"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-r3",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-list"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "neg-r4",
+      "kind": "denial",
+      "tags": [
+        "real-transcript",
+        "denial-filler"
+      ],
+      "expectedRule": null,
+      "hits": [],
+      "level": 4,
+      "expectedLevel": 4,
+      "outcome": "ok"
+    },
+    {
+      "id": "rf-r1",
+      "kind": "redflag",
+      "tags": [
+        "real-transcript",
+        "denial-list"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-r2",
+      "kind": "redflag",
+      "tags": [
+        "denial-list"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    },
+    {
+      "id": "rf-r3",
+      "kind": "redflag",
+      "tags": [
+        "denial-list"
+      ],
+      "expectedRule": "呼吸困难",
+      "hits": [
+        "呼吸困难"
+      ],
+      "level": 2,
+      "expectedLevel": 2,
+      "outcome": "hit"
+    }
+  ]
+}
