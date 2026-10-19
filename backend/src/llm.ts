@@ -109,13 +109,45 @@ export interface BedrockOptions {
   client?: BedrockRuntimeClient;
 }
 
+/**
+ * Escape double quotes inside JSON strings that the model forgot to escape:
+ * a quote only closes a string when the next non-space character is , : } ] or
+ * the end. Real Sonnet output wrote 典型"三多一少"表现 inside a nested object
+ * it had sent as a string.
+ */
+export function repairJson(text: string): string {
+  let out = "";
+  let inString = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inString && ch === "\\") {
+      out += ch + (text[i + 1] ?? "");
+      i++;
+      continue;
+    }
+    if (ch === '"') {
+      if (!inString) inString = true;
+      else if (/^\s*([,:}\]]|$)/.test(text.slice(i + 1))) inString = false;
+      else {
+        out += '\\"';
+        continue;
+      }
+    }
+    out += ch;
+  }
+  return out;
+}
+
 function decodeJsonString(v: unknown): unknown {
   if (typeof v !== "string" || !/^\s*[[{]/.test(v)) return v;
-  try {
-    return JSON.parse(v);
-  } catch {
-    return v;
+  for (const text of [v, repairJson(v)]) {
+    try {
+      return JSON.parse(text);
+    } catch {
+      // try the repaired text next
+    }
   }
+  return v;
 }
 
 export interface ToolCallRequest<T> {
@@ -147,7 +179,7 @@ export async function invokeWithTool<T>(
   const toolName = `submit_${req.name}`;
   const tool = { type: "function" as const, function: { name: toolName, description: `Submit the ${req.name} result.`, parameters } };
   const runnable = model.bindTools([tool], { tool_choice: "auto" });
-  const system = `${req.system}\n\n请调用工具 ${toolName} 提交结果，不要输出其他文字。参数中的对象和数组直接写成 JSON 结构，不要包成字符串。`;
+  const system = `${req.system}\n\n请调用工具 ${toolName} 提交结果，不要输出其他文字。参数中的对象和数组直接写成 JSON 结构，不要包成字符串。文本里需要引号时用「」，不要用英文双引号。`;
 
   let lastError = "no tool call in reply";
   let feedback = "";

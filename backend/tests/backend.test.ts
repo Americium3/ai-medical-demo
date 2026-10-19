@@ -72,6 +72,15 @@ test("record updates must quote the patient; 'not sure' never overwrites an answ
   assert.deepEqual(rejected.map((r) => r.slotId), ["allergy", "nonexistent"]);
 });
 
+test("the template follows the first symptom named, not a later accompanying one", () => {
+  // Real eval: 头痛 … 伴眩晕、恶心 went to the abdomen template because 恶心 matched first in table order.
+  assert.equal(chooseTemplate("医生您好，我反复头痛一个月，伴眩晕、恶心。").id, "head");
+  assert.equal(chooseTemplate("反复腹痛、腹泻三天，伴恶心").id, "abdomen");
+  assert.equal(chooseTemplate("咳嗽、发热一周，伴有黄痰").id, "respiratory");
+  assert.equal(chooseTemplate("反复胸闷、心悸两周，活动后加重").id, "chest");
+  assert.equal(chooseTemplate("腰背疼痛三个月").id, "general");
+});
+
 test("triage rules map to the four levels and respect negation", () => {
   assert.equal(matchRules("胸口痛了一个小时，一直出大汗")[0].level, 2);
   assert.equal(matchRules("刚才叫不醒")[0].level, 1);
@@ -275,6 +284,40 @@ test("Bedrock: offers the tool with auto choice, sends no temperature, validates
     // A full note runs past 1,500 output tokens on real models and was cut off mid-JSON (#8).
     assert.equal((seen[0].body!.inferenceConfig as { maxTokens: number }).maxTokens, 1500, "fast tier");
     assert.equal((seen.at(-1)!.body!.inferenceConfig as { maxTokens: number }).maxTokens, 4096, "smart tier");
+  } finally {
+    fake.close();
+  }
+});
+
+test("Bedrock: a nested object sent as a JSON string with unescaped quotes is repaired", async () => {
+  // Real eval: Sonnet sent forDoctor as a string whose text held 典型"三多一少"表现, which JSON.parse rejects.
+  const fake = createServer((req, res) => {
+    req.resume();
+    req.on("end", () => {
+      const updates = '[{"slotId": "onset", "status": "answered", "value": "典型"三多一少"两周", "quote": "两周"}]';
+      res.setHeader("content-type", "application/json");
+      res.end(
+        JSON.stringify({
+          output: { message: { role: "assistant", content: [{ toolUse: { toolUseId: "t1", name: "submit_extract", input: { updates } } }] } },
+          stopReason: "tool_use",
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+          metrics: { latencyMs: 1 },
+        }),
+      );
+    });
+  });
+  await new Promise<void>((r) => fake.listen(0, "127.0.0.1", r));
+  const client = new BedrockRuntimeClient({
+    region: "us-east-1",
+    endpoint: `http://127.0.0.1:${(fake.address() as AddressInfo).port}`,
+    credentials: { accessKeyId: "test", secretAccessKey: "test" },
+    requestHandler: new NodeHttpHandler(),
+  });
+  try {
+    const llm = createBedrockLLM({ region: "us-east-1", fastModelId: "fast-model", smartModelId: "smart-model", client });
+    const out = await llm.invoke({ task: "extract", schema: extractSchema, system: "s", user: "u", context: null });
+    assert.equal(out.updates[0].value, '典型"三多一少"两周');
+    assert.equal(llm.usage.length, 1, "parsed on the first reply");
   } finally {
     fake.close();
   }
