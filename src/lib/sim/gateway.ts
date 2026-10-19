@@ -9,7 +9,8 @@ export type AgentTask =
   | "differential"
   | "plan"
   | "self_check"
-  | "patient";
+  | "patient"
+  | "judge";
 
 export interface StructuredCall<T> {
   task: AgentTask;
@@ -33,7 +34,7 @@ export interface UsageRecord {
 }
 
 export interface AgentLLM {
-  readonly kind: "gateway" | "mock";
+  readonly kind: "gateway" | "bedrock" | "mock";
   readonly model: string;
   invoke<T>(call: StructuredCall<T>): Promise<T>;
   /** Every call made through this instance, for cost/latency reporting. */

@@ -2,13 +2,13 @@
  * Backend (Bedrock + LangGraph) evaluation on the 6 demo cases (issue #8).
  *
  *   npx tsx scripts/eval-backend.ts --mock            # offline: mock agent, scripted patient, mock judge
- *   BEDROCK_ACCESS_KEY_ID=... BEDROCK_SECRET_ACCESS_KEY=... AI_GATEWAY_API_KEY=... \
- *     npx tsx scripts/eval-backend.ts --runs 3
+ *   BEDROCK_ACCESS_KEY_ID=... BEDROCK_SECRET_ACCESS_KEY=... npx tsx scripts/eval-backend.ts --runs 3
  *
  * The agent is the backend ConsultationService on Bedrock (Anthropic models).
- * The simulated patient and the judge run through Vercel AI Gateway on two
- * other model families, so neither shares a family with the agent or each
- * other. The judge scores the draft note against the conversation that
+ * The simulated patient (default Amazon Nova Pro) and the judge (default
+ * DeepSeek V3.1) are two other model families, so neither shares a family with
+ * the agent or each other. They run on Bedrock too by default; a spec without
+ * the "bedrock:" prefix goes through Vercel AI Gateway (scripts/lib/models.ts). The judge scores the draft note against the conversation that
  * actually happened (completeness, accuracy, unsupported statements), not
  * against a reference diagnosis: the backend writes no diagnosis.
  *
@@ -24,7 +24,7 @@
  * --phrasing template asks the template wording instead of the model rewrite
  * (#10: run both and compare before dropping the rewrite step).
  *
- * Flags: --mock  --patient <gateway id>  --judge <gateway id>  --runs <n>  --phrasing model|template
+ * Flags: --mock  --patient <spec>  --judge <spec>  --runs <n>  --phrasing model|template
  *        --cases id1,id2  --out <dir>  --label <tag suffix>
  */
 import { mkdtempSync, readFileSync } from "node:fs";
@@ -33,7 +33,6 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { z } from "zod";
 import { MEDICAL_CASES, type MedicalCase } from "../src/data/cases";
-import { createGatewayChatModel, createGatewayLLM } from "../src/lib/sim/gateway";
 import { createLLMPatient, createScriptedPatient, openingLine } from "../src/lib/sim/patient";
 import type { Turn } from "../src/lib/sim/patient";
 import { createCheckpointer, createLLM, loadConfig } from "../backend/src/config";
@@ -44,12 +43,13 @@ import { normalize } from "../shared/safety/grounding";
 import { createMockLLM } from "../backend/src/mock-llm";
 import { ConsultationService, type ConsultationView } from "../backend/src/service";
 import { writeEvalOutput } from "./lib/eval-output";
+import { createEvalLLM, familyOf, needsGateway } from "./lib/models";
 
 const { values: args } = parseArgs({
   options: {
     mock: { type: "boolean", default: false },
-    patient: { type: "string", default: "openai/gpt-4o-mini" },
-    judge: { type: "string", default: "deepseek/deepseek-chat" },
+    patient: { type: "string", default: "bedrock:us.amazon.nova-pro-v1:0" },
+    judge: { type: "string", default: "bedrock:deepseek.v3-v1:0" },
     runs: { type: "string", default: "1" },
     phrasing: { type: "string", default: "model" },
     cases: { type: "string" },
@@ -60,15 +60,14 @@ const { values: args } = parseArgs({
 
 const MOCK = args.mock;
 const AGENT_FAMILY = "anthropic"; // Bedrock serves Claude
-const family = (id: string) => id.split("/")[0];
 if (!MOCK) {
-  const families = [AGENT_FAMILY, family(args.patient!), family(args.judge!)];
+  const families = [AGENT_FAMILY, familyOf(args.patient!), familyOf(args.judge!)];
   if (new Set(families).size !== 3) {
     console.error(`Agent, patient and judge must be three different model families; got ${families.join(", ")}.`);
     process.exit(1);
   }
-  if (!process.env.AI_GATEWAY_API_KEY) {
-    console.error("AI_GATEWAY_API_KEY is not set (needed for the patient and the judge). Pass --mock for an offline harness check.");
+  if ((needsGateway(args.patient!) || needsGateway(args.judge!)) && !process.env.AI_GATEWAY_API_KEY) {
+    console.error("AI_GATEWAY_API_KEY is not set (needed for a Gateway patient or judge). Pass --mock for an offline harness check.");
     process.exit(1);
   }
 }
@@ -92,14 +91,11 @@ const JUDGE_SYSTEM = `你是门诊病历质控医生。下面给你一段 AI 预
 - accuracy：病历中的每条陈述是否都能在患者的话里找到依据，有没有改变原意（比如把否认写成阳性）；
 - unsupported：逐条列出在对话中找不到依据的陈述。`;
 
+const judgeLLM = () => createEvalLLM(args.judge!, 1500);
+
 async function llmJudge(transcript: Turn[], note: string): Promise<JudgeOutput> {
-  const chat = createGatewayChatModel(args.judge!, { maxTokens: 1200 });
-  const runnable = chat.withStructuredOutput(judgeSchema, { name: "judge", method: "functionCalling" });
   const dialogue = transcript.map((t) => `${t.role === "patient" ? "患者" : "问诊助手"}：${t.content}`).join("\n");
-  return runnable.invoke([
-    { role: "system", content: JUDGE_SYSTEM },
-    { role: "user", content: `对话：\n${dialogue}\n\n病历草稿：\n${note}` },
-  ]);
+  return judgeLLM().invoke({ task: "judge", schema: judgeSchema, system: JUDGE_SYSTEM, user: `对话：\n${dialogue}\n\n病历草稿：\n${note}`, context: null });
 }
 
 /** Offline judge: share of patient clauses that reach the note. Measures the harness, not quality. */
@@ -144,12 +140,13 @@ async function judgePairs(pairs: { suggestion: string; passage: string }[]): Pro
       return grams.length > 0 && grams.filter((g) => p.includes(g)).length / grams.length >= 0.4;
     });
   }
-  const chat = createGatewayChatModel(args.judge!, { maxTokens: 800 });
-  const runnable = chat.withStructuredOutput(citationJudgeSchema, { name: "citations", method: "functionCalling" });
-  const out = await runnable.invoke([
-    { role: "system", content: "你是临床指南审核医生。逐对判断：给出的指南片段是否直接支持这条给医生的建议（可能原因或建议检查）。只看片段本身，不要用片段以外的知识。" },
-    { role: "user", content: pairs.map((x, i) => `${i}. 建议：${x.suggestion}\n   指南片段：${x.passage}`).join("\n") },
-  ]);
+  const out = await judgeLLM().invoke({
+    task: "judge",
+    schema: citationJudgeSchema,
+    system: "你是临床指南审核医生。逐对判断：给出的指南片段是否直接支持这条给医生的建议（可能原因或建议检查）。只看片段本身，不要用片段以外的知识。",
+    user: pairs.map((x, i) => `${i}. 建议：${x.suggestion}\n   指南片段：${x.passage}`).join("\n"),
+    context: null,
+  });
   return pairs.map((_, i) => out.verdicts.find((v) => v.index === i)?.supported ?? false);
 }
 
@@ -204,7 +201,7 @@ function agentService(): ConsultationService {
 async function consult(service: ConsultationService, c: MedicalCase, run: number): Promise<Result> {
   const started = Date.now();
   // The patient has its own LLM instance, so its tokens are not billed to the agent.
-  const patient = MOCK ? createScriptedPatient(c) : createLLMPatient(c, createGatewayLLM(args.patient!));
+  const patient = MOCK ? createScriptedPatient(c) : createLLMPatient(c, createEvalLLM(args.patient!, 600));
   let rejects = 0;
   const countRejects = (v: ConsultationView) => {
     for (const t of v.trace) rejects += Number(/丢弃 (\d+) 条/.exec(t.summary)?.[1] ?? 0);
